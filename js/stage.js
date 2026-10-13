@@ -11,6 +11,7 @@ const canvas = stage ? stage.querySelector('canvas') : null;
 const story = document.querySelector('.story');
 const chapters = Array.from(document.querySelectorAll('.chapter[data-scene]'));
 const toggle = document.querySelector('.motion-toggle');
+const header = document.querySelector('.site-header');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // Phones and tablets get a smaller screen texture and simpler materials;
@@ -735,13 +736,13 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130810', 'models/back-rough.png?v=202610130810'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130813', 'models/back-rough.png?v=202610130813'].map((url) => loader.loadAsync(url)));
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130810');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130813');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -807,7 +808,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130810');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130813');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1007,12 +1008,13 @@ async function start() {
     }, { passive: true });
   }
 
-  let width = 0, height = 0;
+  let width = 0, height = 0, headerBottom = 0;
   function resize() {
     const w = stage.clientWidth, h = stage.clientHeight;
     if (w === width && h === height) return;
     width = w;
     height = h;
+    headerBottom = header ? header.offsetHeight : 0;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1116,7 +1118,9 @@ async function start() {
     }
 
     const narrow = width < 896 || width / height < 0.9;
-    const [px, py, prx, pry, prz, ps] = narrow ? def.mob : def.desk;
+    const [px, sy, prx, pry, prz, ps] = narrow ? def.mob : def.desk;
+    // On short phones, lower the phone so its top stays clear of the header.
+    const py = narrow ? Math.min(sy, 1 - ps * Math.abs(Math.cos(prx)) - 2 * (headerBottom / height + 0.015)) : sy;
     const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     const hw = hh * camera.aspect;
 
