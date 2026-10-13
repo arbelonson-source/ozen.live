@@ -276,7 +276,29 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
+  background: radial-gradient(130% 95% at var(--room-x) 0%, var(--room) 0%, var(--ink) 75%);
+  transition: --room 1.4s ease;
 }
+
+/* Each chapter's room takes a dark shade of its sound's colour: the
+   doorbell's amber, the second voice's violet, the teal of sound that
+   stays on the phone. stage.js names the chapter in data-room. */
+@property --room {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #1b3560;
+}
+.stage { --room: #1b3560; --room-x: 80%; }
+:lang(he) .stage { --room-x: 20%; }
+.stage[data-room="called"] { --room: #3a2f12; }
+.stage[data-room="house"] { --room: #452710; }
+.stage[data-room="reply"] { --room: #1c3768; }
+.stage[data-room="letters"] { --room: #283246; }
+.stage[data-room="speakers"] { --room: #2f2256; }
+.stage[data-room="private"] { --room: #0e3a3a; }
+.stage[data-room="home"] { --room: #18315e; }
+.stage[data-room="get"] { --room: #173a78; }
+html:not(.no-webgl) body { background: var(--ink); }
 
 .stage canvas {
   display: block;
@@ -346,12 +368,9 @@ p { margin: 0 0 1em; text-wrap: pretty; }
     /* The lower edge feathers out, so text scrolling up fades away under
        the phone instead of meeting a line. */
     background:
-      radial-gradient(120% 60% at 80% 0%, #1b3560 0%, rgba(27, 53, 96, 0) 60%),
+      radial-gradient(120% 60% at var(--room-x) 0%, var(--room) 0%, rgba(15, 30, 51, 0) 60%),
       linear-gradient(to bottom, var(--ink) 47%, rgba(15, 30, 51, 0) 54%);
   }
-  /* The text sits on the same plain ink as the stage's edge, so the two
-     halves meet without a step in colour. */
-  html:not(.no-webgl) body { background: var(--ink); }
   .chapter {
     min-height: 48vh;
     min-height: 48svh;
