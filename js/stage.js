@@ -16,7 +16,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 // Phones and tablets get a smaller screen texture and simpler materials;
 // anything still slow steps down further while it runs (see quality()).
 const TOUCH = window.matchMedia('(pointer: coarse)').matches;
-const SCREEN_SCALE = TOUCH ? 0.75 : 1;
+const SCREEN_SCALE = TOUCH ? 0.5 : 1;
 
 const BODY = '"Atkinson Hyperlegible", system-ui, sans-serif';
 const DISPLAY = '"Rubik", system-ui, sans-serif';
@@ -735,13 +735,13 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130802', 'models/back-rough.png?v=202610130802'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130810', 'models/back-rough.png?v=202610130810'].map((url) => loader.loadAsync(url)));
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130802');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130810');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -807,7 +807,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130802');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130810');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -896,11 +896,12 @@ async function start() {
   await fontsReady();
 
   // Quality steps: the pixel ratio cap, how often the phone's screen is
-  // redrawn, and a frame-rate cap for the slowest. watchSpeed() moves down
-  // a step whenever frames keep running late, and never back up.
+  // redrawn, and a frame-rate cap (60 even on 90 and 120 Hz screens).
+  // watchSpeed() moves down a step whenever frames keep running late, and
+  // never back up.
   const STEPS = TOUCH
-    ? [{ dpr: 1.5, fps: 20 }, { dpr: 1.25, fps: 15 }, { dpr: 1, fps: 12, cap: 30 }, { dpr: 0.8, fps: 10, cap: 30 }]
-    : [{ dpr: 2, fps: 30 }, { dpr: 1.5, fps: 24 }, { dpr: 1.2, fps: 20 }, { dpr: 1, fps: 15, cap: 30 }];
+    ? [{ dpr: 1.5, fps: 15, cap: 60 }, { dpr: 1.25, fps: 12, cap: 60 }, { dpr: 1, fps: 12, cap: 30 }, { dpr: 0.8, fps: 10, cap: 30 }]
+    : [{ dpr: 2, fps: 30, cap: 60 }, { dpr: 1.5, fps: 24, cap: 60 }, { dpr: 1.2, fps: 20, cap: 60 }, { dpr: 1, fps: 15, cap: 30 }];
   let step = 0;
   const applyStep = () => renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, STEPS[step].dpr));
   applyStep();
@@ -926,7 +927,12 @@ async function start() {
   const screenTexture = new THREE.CanvasTexture(screenCanvas);
   screenTexture.colorSpace = THREE.SRGBColorSpace;
   screenTexture.flipY = false;
-  screenTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (TOUCH) {
+    screenTexture.generateMipmaps = false;
+    screenTexture.minFilter = THREE.LinearFilter;
+  } else {
+    screenTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  }
   const { rig, body } = await loadPhone(screenTexture);
   scene.add(rig);
 
@@ -1012,17 +1018,29 @@ async function start() {
     camera.updateProjectionMatrix();
   }
 
-  function activeChapter() {
-    const mid = window.innerHeight * 0.5;
-    let best = chapters[0], progress = 0;
-    for (const el of chapters) {
+  // Where each chapter sits on the page, measured only when the layout
+  // changes rather than on every frame.
+  let marks = [];
+  function measure() {
+    const y = window.scrollY;
+    marks = chapters.map((el) => {
       const r = el.getBoundingClientRect();
-      if (r.top <= mid) {
-        best = el;
-        progress = clamp((mid - r.top) / Math.max(r.height, 1), 0, 1);
+      return { id: el.dataset.scene, top: r.top + y, height: r.height };
+    });
+  }
+  measure();
+  new ResizeObserver(measure).observe(story);
+
+  function activeChapter(scrollY) {
+    const mid = scrollY + window.innerHeight * 0.5;
+    let best = marks[0], progress = 0;
+    for (const m of marks) {
+      if (m.top <= mid) {
+        best = m;
+        progress = clamp((mid - m.top) / Math.max(m.height, 1), 0, 1);
       }
     }
-    return { id: best.dataset.scene, progress };
+    return { id: best.id, progress };
   }
 
   const pose = { x: 0, y: 0, rx: 0, ry: 0, rz: 0, s: 1 };
@@ -1044,12 +1062,11 @@ async function start() {
 
   let warm = 0, sampled = 0, late = 0, lastStepAt = 0;
   function watchSpeed(raw, now) {
-    if (warm < 90) { warm++; return; }
-    const cap = STEPS[step].cap;
+    if (warm < 45) { warm++; return; }
     sampled++;
-    if (raw > (cap ? 1.5 / cap : 1 / 40)) late++;
-    if (sampled < 60) return;
-    if (late > 20 && step < STEPS.length - 1 && now - lastStepAt > 1500) {
+    if (raw > 1.5 / STEPS[step].cap) late++;
+    if (sampled < 40) return;
+    if (late > 12 && step < STEPS.length - 1 && now - lastStepAt > 1000) {
       step++;
       applyStep();
       lastStepAt = now;
@@ -1058,10 +1075,11 @@ async function start() {
     late = 0;
   }
 
+  let due = 0;
   function frame(now) {
     requestAnimationFrame(frame);
-    const cap = STEPS[step].cap;
-    if (cap && now - last < 1000 / cap - 3) return;
+    if (now < due - 2) return;
+    due = Math.max(due + 1000 / STEPS[step].cap, now);
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw);
     last = now;
@@ -1081,7 +1099,7 @@ async function start() {
       watchSpeed(raw, now);
     }
 
-    const { id, progress } = activeChapter();
+    const { id, progress } = activeChapter(scrollY);
     const def = SCENES[id] || SCENES.captions;
     if (id !== current) {
       current = id;
