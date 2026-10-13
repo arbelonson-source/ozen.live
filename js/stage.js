@@ -26,13 +26,16 @@ if (header) {
   onScroll();
 }
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+// Same test as the stylesheet: landscape and at least 600 px wide puts the
+// phone beside the text, anything else puts it above.
+const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)');
 
 // The phone model starts downloading as soon as this script runs, while the
 // 3D library is still on its way. (A <link rel=preload> for it made Safari
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131054', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131128', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -823,8 +826,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131054'),
-    loader.loadAsync('models/back-rough.png?v=202610131054'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131128'),
+    loader.loadAsync('models/back-rough.png?v=202610131128'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -897,7 +900,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131054');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131128');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1260,10 +1263,10 @@ async function start() {
       lastDraw = clock;
     }
 
-    const narrow = width < 896 || width / height < 0.9;
+    const narrow = !WIDE.matches;
     const [px, sy, prx, pry, prz, ps] = narrow ? def.mob : def.desk;
-    // On short phones, lower the phone so its top stays clear of the header.
-    const py = narrow ? Math.min(sy, 1 - ps * Math.abs(Math.cos(prx)) - 2 * (headerBottom / height + 0.015)) : sy;
+    // On short screens, lower the phone so its top stays clear of the header.
+    const py = Math.min(sy, 1 - ps * Math.abs(Math.cos(prx)) - 2 * (headerBottom / height + 0.015));
     const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     const hw = hh * camera.aspect;
 
