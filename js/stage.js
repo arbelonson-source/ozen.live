@@ -31,7 +31,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 // 3D library is still on its way. (A <link rel=preload> for it made Safari
 // download it twice.)
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610130932').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610130956').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -111,7 +111,59 @@ function drawCode(g, x, y, size) {
 const screenCanvas = document.createElement('canvas');
 screenCanvas.width = Math.round(CW * SCREEN_SCALE);
 screenCanvas.height = Math.round(CH * SCREEN_SCALE);
-const g = screenCanvas.getContext('2d');
+const screen2d = screenCanvas.getContext('2d');
+
+// The screen is drawn into a recording first, and the real canvas (and its
+// copy into the 3D scene) only changes when the recorded commands differ
+// from the last ones drawn: about half of the updates repeat the previous
+// picture exactly. A spare context keeps the font state for measureText.
+const recording = (() => {
+  const shadow = document.createElement('canvas').getContext('2d');
+  let ops = [], last = [];
+  const proxy = new Proxy(shadow, {
+    get(target, prop) {
+      const v = target[prop];
+      if (typeof v !== 'function') return v;
+      if (prop === 'measureText') return v.bind(target);
+      if (prop === 'createLinearGradient' || prop === 'createRadialGradient') return (...a) => screen2d[prop](...a);
+      return (...a) => {
+        ops.push(prop, a);
+        if (prop === 'save' || prop === 'restore') v.call(target);
+      };
+    },
+    set(target, prop, value) {
+      ops.push('=' + prop, value);
+      target[prop] = value;
+      return true;
+    },
+  });
+  const same = (a, b) => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i], y = b[i];
+      if (x === y) continue;
+      if (!Array.isArray(x) || !Array.isArray(y) || x.length !== y.length) return false;
+      for (let j = 0; j < x.length; j++) if (x[j] !== y[j]) return false;
+    }
+    return true;
+  };
+  return {
+    g: proxy,
+    begin() { ops = []; },
+    // Paints the recording if it differs from the last one; says whether it did.
+    finish() {
+      if (same(ops, last)) return false;
+      for (let i = 0; i < ops.length; i += 2) {
+        const op = ops[i], arg = ops[i + 1];
+        if (op[0] === '=') screen2d[op.slice(1)] = arg;
+        else screen2d[op](...arg);
+      }
+      last = ops;
+      return true;
+    },
+  };
+})();
+const g = recording.g;
 
 function clearScreen(colour = '#000000') {
   g.fillStyle = colour;
@@ -770,8 +822,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130932'),
-    loader.loadAsync('models/back-rough.png?v=202610130932'),
+    loader.loadAsync('models/back-colour.jpg?v=202610130956'),
+    loader.loadAsync('models/back-rough.png?v=202610130956'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -844,7 +896,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130932');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130956');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1178,9 +1230,10 @@ async function start() {
     const t = paused ? def.settle : clock - sceneStart;
 
     if (lastDraw < 0 || (!paused && clock - lastDraw > 1 / STEPS[step].fps)) {
+      recording.begin();
       g.setTransform(SCREEN_SCALE, 0, 0, SCREEN_SCALE, 0, 0);
       def.draw(t, clock);
-      screenTexture.needsUpdate = true;
+      if (recording.finish()) screenTexture.needsUpdate = true;
       lastDraw = clock;
     }
 
