@@ -735,7 +735,7 @@ function lensTexture() {
 // models/phone.glb comes from the Blender script in the site's model/
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130757');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
