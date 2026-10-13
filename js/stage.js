@@ -27,6 +27,14 @@ if (header) {
 }
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+// The phone model starts downloading as soon as this script runs, while the
+// 3D library is still on its way. (A <link rel=preload> for it made Safari
+// download it twice.)
+const phoneBytes = 'WebGL2RenderingContext' in window
+  ? fetch('models/phone.glb?v=202610130905').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  : Promise.reject(new Error('no WebGL 2'));
+phoneBytes.catch(() => {});
+
 // Phones and tablets get a smaller screen texture and simpler materials;
 // anything still slow steps down further while it runs (see quality()).
 const TOUCH = window.matchMedia('(pointer: coarse)').matches;
@@ -750,9 +758,9 @@ function lensTexture() {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130901'),
-    loader.loadAsync('models/back-rough.png?v=202610130901'),
-    new GLTFLoader().loadAsync('models/phone.glb?v=202610130901'),
+    loader.loadAsync('models/back-colour.jpg?v=202610130905'),
+    loader.loadAsync('models/back-rough.png?v=202610130905'),
+    phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
@@ -824,7 +832,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130901');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130905');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
