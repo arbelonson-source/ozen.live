@@ -735,24 +735,31 @@ function lensTexture() {
 // models/phone.glb comes from the Blender script in the site's model/
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130757');
+  const loader = new THREE.TextureLoader();
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130759', 'models/back-rough.png?v=202610130759'].map((url) => loader.loadAsync(url)));
+  backColour.colorSpace = THREE.SRGBColorSpace;
+  for (const t of [backColour, backRough]) {
+    t.flipY = false;
+    t.anisotropy = 4;
+  }
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130759');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
 
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const rich = (extra) => (TOUCH ? {} : extra);
-  const backColour = 0x23355a;
+  const plateau = 0x23355a;
   const mats = {
     Frame: new Mat({ color: 0xa7adb6, metalness: 1, roughness: 0.22 }),
     FrontGlass: new Mat({ color: 0x030405, roughness: 0.05, ...rich({ clearcoat: 1, clearcoatRoughness: 0.03 }) }),
-    BackGlass: new Mat({ color: backColour, roughness: 0.55, ...rich({ clearcoat: 0.15, clearcoatRoughness: 0.5 }) }),
+    BackGlass: new Mat({ map: backColour, roughnessMap: backRough, roughness: 1, ...rich({ clearcoat: 0.12, clearcoatRoughness: 0.5 }) }),
     Screen: new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false }),
     Cover: new Mat({
       color: 0x000000, roughness: 0.04, transparent: true, depthWrite: false,
       blending: THREE.AdditiveBlending, envMapIntensity: 0.22, ...rich({ clearcoat: 0.6, clearcoatRoughness: 0.03 }),
     }),
-    Plateau: new Mat({ color: backColour, roughness: 0.1, ...rich({ clearcoat: 1, clearcoatRoughness: 0.05 }) }),
+    Plateau: new Mat({ color: plateau, roughness: 0.1, ...rich({ clearcoat: 1, clearcoatRoughness: 0.05 }) }),
     LensRing: new Mat({ color: 0xcfd3da, metalness: 1, roughness: 0.12 }),
     LensGlass: new Mat({
       map: lensTexture(), metalness: 0.25, roughness: 0.04,
