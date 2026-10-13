@@ -4,7 +4,6 @@
 // in the page, and the canvas is hidden from screen readers.
 
 import * as THREE from '../vendor/three.module.min.js';
-import { RoundedBoxGeometry } from '../vendor/RoundedBoxGeometry.js';
 import { GLTFLoader } from '../vendor/GLTFLoader.js';
 
 const stage = document.querySelector('.stage');
@@ -736,13 +735,13 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130800', 'models/back-rough.png?v=202610130800'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130801', 'models/back-rough.png?v=202610130801'].map((url) => loader.loadAsync(url)));
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130800');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130801');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -807,28 +806,24 @@ function studioEnvironment() {
   return env;
 }
 
-function buildLaptop(texture) {
+async function loadLaptop(texture) {
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130801');
+  const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
+  const mats = {
+    Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
+    KeyWell: new Mat({ color: 0x14171c, roughness: 0.75 }),
+    Key: new Mat({ color: 0x1c1f25, roughness: 0.55 }),
+    Trackpad: new Mat({ color: 0xb3bac4, metalness: 0.6, roughness: 0.22 }),
+    Bezel: new Mat({ color: 0x050607, roughness: 0.06 }),
+    LaptopScreen: new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
+    Hinge: new Mat({ color: 0x3a3f48, metalness: 1, roughness: 0.4 }),
+    Port: new THREE.MeshBasicMaterial({ color: 0x040404 }),
+  };
+  gltf.scene.traverse((o) => {
+    if (o.isMesh && mats[o.material.name]) o.material = mats[o.material.name];
+  });
   const group = new THREE.Group();
-  const metal = new THREE.MeshStandardMaterial({ color: 0xaab3c2, metalness: 0.9, roughness: 0.34 });
-  group.add(new THREE.Mesh(new RoundedBoxGeometry(2.6, 0.08, 1.75, 4, 0.03), metal));
-  const deck = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.92), new THREE.MeshStandardMaterial({ color: 0x1b202a, roughness: 0.85 }));
-  deck.rotation.x = -Math.PI / 2;
-  deck.position.set(0, 0.042, -0.22);
-  group.add(deck);
-  const pad = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.52), new THREE.MeshStandardMaterial({ color: 0x9aa3b2, metalness: 0.6, roughness: 0.45 }));
-  pad.rotation.x = -Math.PI / 2;
-  pad.position.set(0, 0.042, 0.5);
-  group.add(pad);
-  const hinge = new THREE.Group();
-  hinge.position.set(0, 0.04, -0.86);
-  hinge.rotation.x = -0.24;
-  group.add(hinge);
-  const lid = new THREE.Mesh(new RoundedBoxGeometry(2.6, 1.7, 0.05, 4, 0.02), metal);
-  lid.position.set(0, 0.85, 0);
-  hinge.add(lid);
-  const display = new THREE.Mesh(new THREE.PlaneGeometry(2.42, 1.52), new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }));
-  display.position.set(0, 0.85, 0.027);
-  hinge.add(display);
+  group.add(gltf.scene);
   return group;
 }
 
@@ -937,10 +932,11 @@ async function start() {
 
   const laptopTexture = new THREE.CanvasTexture(laptopCanvas);
   laptopTexture.colorSpace = THREE.SRGBColorSpace;
+  laptopTexture.flipY = false;
   laptopTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   drawLaptop(false);
   let laptopConnected = false;
-  const laptop = buildLaptop(laptopTexture);
+  const laptop = await loadLaptop(laptopTexture);
   laptop.visible = false;
   scene.add(laptop);
 
