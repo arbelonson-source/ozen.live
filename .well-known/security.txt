@@ -1,4 +1,4 @@
-Contact: mailto:arbelonson@proton.me
+Contact: mailto:arbelonson@gmail.com
 Expires: 2027-10-13T00:00:00.000Z
 Preferred-Languages: en
 Canonical: https://ozen.live/.well-known/security.txt
