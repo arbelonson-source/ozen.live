@@ -12,6 +12,19 @@ const story = document.querySelector('.story');
 const chapters = Array.from(document.querySelectorAll('.chapter[data-scene]'));
 const toggle = document.querySelector('.motion-toggle');
 const header = document.querySelector('.site-header');
+
+if (header) {
+  let scrolled = null;
+  const onScroll = () => {
+    const now = window.scrollY > 8;
+    if (now !== scrolled) {
+      scrolled = now;
+      header.dataset.scrolled = String(now);
+    }
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // Phones and tablets get a smaller screen texture and simpler materials;
@@ -736,13 +749,13 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130813', 'models/back-rough.png?v=202610130813'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130818', 'models/back-rough.png?v=202610130818'].map((url) => loader.loadAsync(url)));
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130813');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130818');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -808,7 +821,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130813');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130818');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1177,7 +1190,7 @@ async function start() {
       ringTimer -= dt;
       if (ringTimer <= 0) {
         if (def.rings === 'voices') {
-          emit(tmp.set(pose.x - (narrow ? 0.9 : 2.2), pose.y + 0.5, -0.6), '#8db4ff', { reach: 1.4, life: 2.2, strength: 0.28 });
+          emit(tmp.set(pose.x - (narrow ? 0.9 : 1.7), pose.y + 0.5, -0.6), '#8db4ff', { reach: 1.4, life: 2.2, strength: 0.28 });
           ringTimer = 0.9;
         } else if (def.rings === 'doorbell') {
           const tt = t % HOUSE_PERIOD;

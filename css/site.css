@@ -28,6 +28,7 @@ html {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .site-header::before { transition: none; }
 }
 
 body {
@@ -98,6 +99,21 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   padding: 0.9rem var(--gutter);
   background: linear-gradient(to bottom, rgba(10, 21, 38, 0.92), rgba(10, 21, 38, 0));
 }
+
+/* Once the page scrolls, text passes under the header, so it turns solid
+   with a short soft edge below. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1.25rem 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(10, 21, 38) calc(100% - 1.25rem), rgba(10, 21, 38, 0));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.site-header[data-scrolled="true"]::before,
+.doc-page .site-header::before { opacity: 1; }
 
 .brand {
   display: inline-flex;
