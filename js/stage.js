@@ -749,13 +749,16 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130839', 'models/back-rough.png?v=202610130839'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough, gltf] = await Promise.all([
+    loader.loadAsync('models/back-colour.jpg?v=202610130844'),
+    loader.loadAsync('models/back-rough.png?v=202610130844'),
+    new GLTFLoader().loadAsync('models/phone.glb?v=202610130844'),
+  ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130839');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -821,7 +824,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130839');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130844');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -907,6 +910,20 @@ async function start() {
     document.documentElement.classList.add('no-webgl');
   });
 
+  // Start downloading the phone at once; the fonts its screen needs load
+  // at the same time.
+  const screenTexture = new THREE.CanvasTexture(screenCanvas);
+  screenTexture.colorSpace = THREE.SRGBColorSpace;
+  screenTexture.flipY = false;
+  if (TOUCH) {
+    screenTexture.generateMipmaps = false;
+    screenTexture.minFilter = THREE.LinearFilter;
+  } else {
+    screenTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  }
+  const phoneLoad = loadPhone(screenTexture);
+  phoneLoad.catch(() => {});
+
   await fontsReady();
 
   // Quality steps: the pixel ratio cap, how often the phone's screen is
@@ -938,16 +955,7 @@ async function start() {
   rim.position.set(-6, 2, -4);
   scene.add(rim);
 
-  const screenTexture = new THREE.CanvasTexture(screenCanvas);
-  screenTexture.colorSpace = THREE.SRGBColorSpace;
-  screenTexture.flipY = false;
-  if (TOUCH) {
-    screenTexture.generateMipmaps = false;
-    screenTexture.minFilter = THREE.LinearFilter;
-  } else {
-    screenTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  }
-  const { rig, body } = await loadPhone(screenTexture);
+  const { rig, body } = await phoneLoad;
   scene.add(rig);
 
   const laptopTexture = new THREE.CanvasTexture(laptopCanvas);
@@ -956,9 +964,19 @@ async function start() {
   laptopTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   drawLaptop(false);
   let laptopConnected = false;
-  const laptop = await loadLaptop(laptopTexture);
-  laptop.visible = false;
-  scene.add(laptop);
+  // The laptop only appears far down the page, so it loads after the phone
+  // is already showing, and its shaders are prepared before it's needed.
+  let laptop = null;
+  loadLaptop(laptopTexture).then(async (model) => {
+    try {
+      if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(model, camera, scene);
+      else renderer.compile(model, camera, scene);
+    } catch (err) { /* compiled on first draw instead */ }
+    model.visible = false;
+    scene.add(model);
+    laptop = model;
+    redraw();
+  }).catch(() => {});
 
   const glow = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 10),
@@ -1174,8 +1192,8 @@ async function start() {
 
     laptopShow += ((def.laptop ? 1 : 0) - laptopShow) * (paused ? 0.35 : 1 - Math.exp(-dt * (def.laptop ? 4 : 9)));
     if (!def.laptop && laptopShow < 0.15) laptopShow = 0;
-    laptop.visible = laptopShow > 0;
-    if (laptop.visible) {
+    if (laptop) laptop.visible = laptopShow > 0;
+    if (laptop && laptop.visible) {
       laptop.scale.setScalar((narrow ? 0.42 : 0.78) * laptopShow);
       laptop.position.set(narrow ? -0.32 * hw : 0.32 * hw, narrow ? 0.34 * hh : -0.22 * hh, narrow ? 0 : -0.4);
       laptop.rotation.set(0.36, narrow ? 0.35 : 0.5, 0);
