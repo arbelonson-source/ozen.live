@@ -84,7 +84,10 @@
 /* The Hebrew pages set everything in Rubik, which has Hebrew letters, and
    drop the tight heading tracking that only suits Latin capitals. */
 :root:lang(he) { --body: "Rubik", system-ui, sans-serif; }
-:lang(he) h1, :lang(he) h2, :lang(he) h3 { letter-spacing: 0; }
+/* Hebrew final letters (ך ן ף ץ) and ק reach below the line, so Hebrew
+   headings get more room between lines, and a weight that keeps the
+   letters' counters open at display sizes. */
+:lang(he) h1, :lang(he) h2, :lang(he) h3 { letter-spacing: 0; line-height: 1.14; font-weight: 700; }
 
 * { box-sizing: border-box; }
 
