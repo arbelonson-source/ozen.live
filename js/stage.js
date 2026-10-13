@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131324', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131345', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -917,8 +917,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131324'),
-    loader.loadAsync('models/back-rough.png?v=202610131324'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131345'),
+    loader.loadAsync('models/back-rough.png?v=202610131345'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -938,9 +938,12 @@ async function loadPhone(screenTexture) {
     FrontGlass: new Mat({ color: 0x030405, roughness: 0.05, ...rich({ clearcoat: 1, clearcoatRoughness: 0.03 }) }),
     BackGlass: new Mat({ map: backColour, roughnessMap: backRough, roughness: 1, ...rich({ clearcoat: 0.12, clearcoatRoughness: 0.5 }) }),
     Screen: canvasScreenMaterial(screenTexture),
+    // The glass over the screen. Opacity scales everything it adds, so the
+    // studio's reflection is kept (0.12 x 1.8) while the lights' highlight,
+    // which turned the whole screen grey when the phone tipped back, is cut.
     Cover: new Mat({
-      color: 0x000000, roughness: 0.04, transparent: true, depthWrite: false,
-      blending: THREE.AdditiveBlending, envMapIntensity: 0.22, ...rich({ clearcoat: 0.6, clearcoatRoughness: 0.03 }),
+      color: 0x000000, roughness: 0.04, transparent: true, depthWrite: false, opacity: 0.12,
+      blending: THREE.AdditiveBlending, envMapIntensity: 1.8, ...rich({ clearcoat: 0.6, clearcoatRoughness: 0.03 }),
     }),
     Plateau: new Mat({ color: plateau, roughness: 0.1, ...rich({ clearcoat: 1, clearcoatRoughness: 0.05 }) }),
     LensRing: new Mat({ color: 0xcfd3da, metalness: 1, roughness: 0.12 }),
@@ -991,7 +994,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131324');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131345');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
