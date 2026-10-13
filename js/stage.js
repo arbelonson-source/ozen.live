@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131254', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131324', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -318,6 +318,9 @@ function captionBlock(entries, bottom, top, size = 54) {
       g.font = `700 32px ${BODY}`;
       g.fillStyle = e.colour;
       g.fillText(e.speaker, 56, ry + 18);
+      g.beginPath();
+      g.arc(56 + g.measureText(e.speaker).width + 20, ry + 18, 9, 0, Math.PI * 2);
+      g.fill();
       ry += 44;
     }
     g.font = `700 ${size}px ${BODY}`;
@@ -367,6 +370,17 @@ function transcript(history, lines, t, { cps = 26, gap = 0.9, hold = 2.6, start 
 const transcriptPeriod = (lines, { cps = 26, gap = 0.9, hold = 2.6, start = 0.3 } = {}) =>
   start + lines.reduce((a, l) => a + l.text.length / cps + gap, 0) + hold;
 
+// The line being typed out at time t, or -1 between lines.
+function speakingLine(lines, t, { cps = 26, gap = 0.9, start = 0.3 } = {}) {
+  let left = (t % transcriptPeriod(lines, { cps, gap, start })) - start;
+  for (let i = 0; i < lines.length; i++) {
+    const typing = lines[i].text.length / cps;
+    if (left >= 0 && left < typing) return i;
+    left -= typing + gap;
+  }
+  return -1;
+}
+
 function pill(text, y, fill, ink, size = 34) {
   g.font = `700 ${size}px ${BODY}`;
   const w = g.measureText(text).width + 56;
@@ -401,9 +415,9 @@ const HERO_LINES = [
 const HERO_PERIOD = transcriptPeriod(HERO_LINES);
 
 const SPEAKER_LINES = [
-  { speaker: 'Noa', colour: '#c9a2ff', text: 'Are you coming on Saturday?' },
-  { speaker: 'Dad', colour: '#7ee2a8', text: "We'll be there by 12." },
-  { speaker: 'Noa', colour: '#c9a2ff', text: 'Great! Bring the cake.' },
+  { speaker: 'Noa', colour: '#c9a2ff', ring: '#8f4dff', text: 'Are you coming on Saturday?' },
+  { speaker: 'Dad', colour: '#7ee2a8', ring: '#19c96a', text: "We'll be there by 12." },
+  { speaker: 'Noa', colour: '#c9a2ff', ring: '#8f4dff', text: 'Great! Bring the cake.' },
 ];
 const SPEAKER_PERIOD = transcriptPeriod(SPEAKER_LINES);
 
@@ -828,8 +842,8 @@ const SCENES = {
     draw: (t) => drawLetters(t),
   },
   speakers: {
-    desk: [0.48, 0.0, -0.04, -0.32, 0.03, 0.72], mob: [0, 0.42, -0.03, -0.22, 0.02, 0.42],
-    glow: '#b48cff', rings: 'voices', settle: SPEAKER_PERIOD - 1.4,
+    desk: [0.48, 0.0, 0.0, 0.1, -0.04, 0.72], mob: [0, 0.42, 0, 0.08, -0.02, 0.42],
+    glow: '#b48cff', rings: 'speakers', settle: SPEAKER_PERIOD - 1.4,
     draw: (t) => drawCaptionScreen(t, { lines: SPEAKER_LINES, history: [] }),
   },
   private: {
@@ -903,8 +917,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131254'),
-    loader.loadAsync('models/back-rough.png?v=202610131254'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131324'),
+    loader.loadAsync('models/back-rough.png?v=202610131324'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -977,7 +991,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131254');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131324');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1402,6 +1416,15 @@ async function start() {
         if (def.rings === 'voices') {
           emit(tmp.set(pose.x - (narrow ? 0.9 : 1.7), pose.y + 0.5, -0.6), '#8db4ff', { reach: 1.4, life: 2.2, strength: 0.28 });
           ringTimer = 0.9;
+        } else if (def.rings === 'speakers') {
+          // Each voice in its own colour, from its own side of the phone.
+          const i = speakingLine(SPEAKER_LINES, t);
+          if (i >= 0) {
+            const line = SPEAKER_LINES[i];
+            const side = line.speaker === SPEAKER_LINES[0].speaker ? -1 : 1;
+            emit(tmp.set(pose.x + side * (narrow ? 0.9 : 1.5), pose.y + 0.5, -0.6), line.ring, { reach: 1.4, life: 2.2, strength: 0.6 });
+          }
+          ringTimer = 0.6;
         } else if (def.rings === 'doorbell') {
           const tt = t % HOUSE_PERIOD;
           if (tt > 0.25 && tt < 2.0) {
