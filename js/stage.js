@@ -749,13 +749,13 @@ function lensTexture() {
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
-  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130833', 'models/back-rough.png?v=202610130833'].map((url) => loader.loadAsync(url)));
+  const [backColour, backRough] = await Promise.all(['models/back-colour.jpg?v=202610130839', 'models/back-rough.png?v=202610130839'].map((url) => loader.loadAsync(url)));
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
     t.flipY = false;
     t.anisotropy = 4;
   }
-  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130833');
+  const gltf = await new GLTFLoader().loadAsync('models/phone.glb?v=202610130839');
   const rig = new THREE.Group();
   const body = new THREE.Group();
   rig.add(body);
@@ -821,7 +821,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130833');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130839');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1079,7 +1079,7 @@ async function start() {
   function watchSpeed(raw, now) {
     if (warm < 45) { warm++; return; }
     sampled++;
-    if (raw > 1.5 / STEPS[step].cap) late++;
+    if (raw > 1.5 / cap) late++;
     if (sampled < 40) return;
     if (late > 12 && step < STEPS.length - 1 && now - lastStepAt > 1000) {
       step++;
@@ -1090,11 +1090,20 @@ async function start() {
     late = 0;
   }
 
-  let due = 0;
+  // On touch screens the slow idle motion runs at 30 frames a second while
+  // the page is still, and at the step's full rate as soon as it scrolls.
+  let due = 0, cap = STEPS[0].cap, movedAt = -1e9, seenScroll = -1;
   function frame(now) {
     requestAnimationFrame(frame);
+    const scrollY = window.scrollY;
+    if (scrollY !== seenScroll) {
+      if (now - movedAt > 400) due = 0;
+      seenScroll = scrollY;
+      movedAt = now;
+    }
+    cap = TOUCH && now - movedAt > 400 ? Math.min(30, STEPS[step].cap) : STEPS[step].cap;
     if (now < due - 2) return;
-    due = Math.max(due + 1000 / STEPS[step].cap, now);
+    due = Math.max(due + 1000 / cap, now);
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw);
     last = now;
@@ -1102,7 +1111,6 @@ async function start() {
     resize();
 
     // Paused and not scrolling: the picture is already settled, so stop drawing.
-    const scrollY = window.scrollY;
     if (paused && scrollY === lastScroll && lastDraw >= 0) {
       if (++still > 45) return;
     } else {
