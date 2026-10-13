@@ -304,6 +304,8 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 html:not(.no-webgl) body { background: var(--ink); }
 
 .stage canvas {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -311,6 +313,31 @@ html:not(.no-webgl) body { background: var(--ink); }
   transition: opacity 900ms ease;
 }
 .stage.ready canvas { opacity: 1; }
+
+/* Phones only: until the 3D phone is ready, a picture of it in its opening
+   pose holds its place (stage.js puts it where the 3D phone appears, and
+   the 3D phone fades in over it). Desktops never download the picture. */
+.stage-poster { display: none; }
+@media not all and (min-aspect-ratio: 1/1) and (min-width: 37.5rem) {
+  .stage-poster {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: var(--poster-y, 30%);
+    height: 46%;
+    aspect-ratio: 26 / 46;
+    transform: translate(-50%, -50%);
+    background: url("../models/poster-en.webp") center / contain no-repeat;
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  :lang(he) .stage-poster { background-image: url("../models/poster-he.webp"); }
+  .stage.poster .stage-poster { opacity: 1; }
+  /* A short hand-over, so the 3D phone's slow bob can't drift from the
+     picture while both are showing. */
+  .stage.poster.ready .stage-poster { opacity: 0; transition-duration: 500ms; }
+  .stage.poster.ready canvas { transition-duration: 500ms; }
+}
 
 .chapter {
   position: relative;

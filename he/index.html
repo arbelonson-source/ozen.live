@@ -31,10 +31,11 @@
 <link rel="modulepreload" href="../vendor/three.module.min.js">
 <link rel="modulepreload" href="../vendor/GLTFLoader.js">
 <link rel="modulepreload" href="../vendor/BufferGeometryUtils.js">
-<link rel="preload" href="../models/back-colour.jpg?v=202610131721" as="image" crossorigin>
-<link rel="preload" href="../models/back-rough.png?v=202610131721" as="image" crossorigin>
-<link rel="stylesheet" href="../css/site.css?v=202610131721">
-<script type="module" src="../js/stage.js?v=202610131721"></script>
+<link rel="preload" href="../models/poster-he.webp" as="image" media="not all and (min-aspect-ratio: 1/1) and (min-width: 37.5rem)" fetchpriority="high">
+<link rel="preload" href="../models/back-colour.jpg?v=202610131756" as="image" crossorigin>
+<link rel="preload" href="../models/back-rough.png?v=202610131756" as="image" crossorigin>
+<link rel="stylesheet" href="../css/site.css?v=202610131756">
+<script type="module" src="../js/stage.js?v=202610131756"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">דילוג לתוכן</a>
@@ -58,7 +59,7 @@
 
 <main id="main">
   <div class="story">
-    <div class="stage" aria-hidden="true"><canvas></canvas></div>
+    <div class="stage" aria-hidden="true"><div class="stage-poster"></div><canvas></canvas></div>
 
     <section class="chapter" id="top" data-scene="captions" aria-labelledby="h-hero">
       <div class="chapter-text">

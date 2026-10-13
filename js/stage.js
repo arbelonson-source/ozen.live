@@ -38,7 +38,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch(asset('models/phone.glb?v=202610131721'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202610131756'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -907,6 +907,33 @@ const SCENES = {
   },
 };
 
+// The idle bob, as a fraction of half the visible height. It starts at the
+// top of its swing, where it moves slowest, so the 3D phone barely moves
+// while it fades in over the poster below.
+const BOB = 0.03;
+
+// Until the 3D phone is ready, phones show a picture of it in its opening
+// pose (models/poster-en.webp and poster-he.webp, rendered from this scene
+// by the site's capture script), placed by the same sums as the 3D phone.
+const poster = stage ? stage.querySelector('.stage-poster') : null;
+function placePoster() {
+  if (WIDE.matches) return;
+  const [, sy, prx, , , ps] = SCENES.captions.mob;
+  const h = stage.clientHeight;
+  const py = Math.min(sy, 1 - ps * Math.abs(Math.cos(prx)) - 2 * ((header ? header.offsetHeight : 0) / h + 0.015));
+  const bob = reduceMotion.matches ? 0 : BOB;
+  stage.style.setProperty('--poster-y', `${(0.5 - (py + bob) / 2) * 100}%`);
+}
+if (poster && !WIDE.matches && window.scrollY < 40) {
+  placePoster();
+  window.addEventListener('resize', placePoster);
+  const picture = new Image();
+  picture.src = asset(`models/poster-${HE ? 'he' : 'en'}.webp`);
+  picture.decode().then(() => {
+    if (!stage.classList.contains('ready')) stage.classList.add('poster');
+  }, () => {});
+}
+
 // ---------------------------------------------------------------------------
 // The 3D scene
 
@@ -960,8 +987,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync(asset('models/back-colour.jpg?v=202610131721')),
-    loader.loadAsync(asset('models/back-rough.png?v=202610131721')),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202610131756')),
+    loader.loadAsync(asset('models/back-rough.png?v=202610131756')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -1037,7 +1064,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131721'));
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131756'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1453,7 +1480,7 @@ async function start() {
     const idle = paused ? 0 : 1;
     const target = {
       x: m * px * hw,
-      y: py * hh + Math.sin(clock * 0.9) * 0.03 * idle,
+      y: (py + Math.cos(clock * 0.9) * BOB * idle) * hh,
       rx: prx + (narrow ? 0 : pointer.y * 0.08),
       ry: m * pry + (def.turn ? m * def.turn(progress) : 0) + Math.sin(clock * 0.55) * 0.05 * idle + (narrow ? 0 : pointer.x * 0.14),
       rz: m * prz,
@@ -1574,6 +1601,9 @@ async function start() {
     last = now;
     frame(now);
     stage.classList.add('ready');
+    // The 3D phone fades in over the picture; after that the picture isn't
+    // needed again, even if the graphics context is later lost.
+    setTimeout(() => stage.classList.remove('poster'), 1000);
   });
 }
 
