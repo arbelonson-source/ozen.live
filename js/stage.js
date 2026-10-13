@@ -30,13 +30,14 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 // The phone model starts downloading as soon as this script runs, while the
 // 3D library is still on its way. (A <link rel=preload> for it made Safari
 // download it twice.)
+const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610130956').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131025', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
 // Phones and tablets get a smaller screen texture and simpler materials;
-// anything still slow steps down further while it runs (see quality()).
+// anything still slow steps down further while it runs (see watchSpeed()).
 const TOUCH = window.matchMedia('(pointer: coarse)').matches;
 const SCREEN_SCALE = TOUCH ? 0.5 : 1;
 
@@ -822,8 +823,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130956'),
-    loader.loadAsync('models/back-rough.png?v=202610130956'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131025'),
+    loader.loadAsync('models/back-rough.png?v=202610131025'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -896,7 +897,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130956');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131025');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -974,11 +975,24 @@ async function start() {
   // up the text on slow phones, so wait for one frame first.
   const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
   await nextFrame();
+
+  // Without WebGL 2 the chapters read as plain text (.no-webgl in the
+  // stylesheet), the 3D library is never read, and the phone model's
+  // download stops if it's still running.
+  const gl = canvas.getContext('webgl2', {
+    alpha: true, antialias: true, depth: true, stencil: false,
+    premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance',
+  });
+  if (!gl) {
+    phoneAbort.abort();
+    document.documentElement.classList.add('no-webgl');
+    return;
+  }
   [THREE, { GLTFLoader }] = await Promise.all([import('../vendor/three.module.min.js'), import('../vendor/GLTFLoader.js')]);
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, alpha: true, powerPreference: 'high-performance' });
   } catch (err) {
     document.documentElement.classList.add('no-webgl');
     return;

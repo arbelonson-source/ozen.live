@@ -495,4 +495,8 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   }
 }
 
+/* No 3D (an old device, or WebGL turned off): the chapters read as a plain
+   article instead of leaving room for the phone. */
 .no-webgl .stage { display: none; }
+.no-webgl .chapter { min-height: 0; justify-content: center; padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.no-webgl #top { padding-top: 7rem; }
