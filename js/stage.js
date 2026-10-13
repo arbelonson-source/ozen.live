@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131128', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131156', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -721,6 +721,82 @@ function drawPrivate(t) {
   g.fillText('No internet needed', 204, 169);
 }
 
+// The app's first screen, as it looks the first time it's opened: the ear
+// symbol, the name, three sentences, page dots, Skip and Next.
+const WELCOME_TEXT = [
+  'Live captions for conversation.',
+  'What’s said near you appears on the screen, in large letters, as it’s spoken.',
+  'It all happens on the phone. Nothing is sent to the internet.',
+];
+const SYSTEM_BLUE = '#0a84ff';
+
+function earSymbol(cx, cy, size) {
+  const k = size / 130;
+  g.save();
+  g.translate(cx, cy);
+  g.scale(k, k);
+  g.strokeStyle = SYSTEM_BLUE;
+  g.lineWidth = 7;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.beginPath();
+  g.moveTo(-38, -2);
+  g.bezierCurveTo(-38, -40, -12, -62, 10, -62);
+  g.bezierCurveTo(38, -62, 48, -36, 46, -14);
+  g.bezierCurveTo(44, 8, 30, 18, 22, 30);
+  g.bezierCurveTo(14, 42, 14, 60, -4, 64);
+  g.bezierCurveTo(-18, 67, -28, 58, -30, 48);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(-17, -6);
+  g.bezierCurveTo(-17, -28, -3, -40, 10, -40);
+  g.bezierCurveTo(25, -40, 30, -24, 24, -11);
+  g.bezierCurveTo(18, 1, 5, 4, 5, 18);
+  g.stroke();
+  g.restore();
+}
+
+function drawWelcome(t) {
+  clearScreen();
+  g.globalAlpha = smooth(0, 0.6, t);
+  statusBar();
+  earSymbol(CW / 2, 236, 136);
+  g.fillStyle = C.text;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = `700 64px ${BODY}`;
+  g.fillText('Ozen', CW / 2, 384);
+  g.font = `400 37px ${BODY}`;
+  g.textAlign = 'left';
+  let y = 470;
+  for (const text of WELCOME_TEXT) {
+    for (const row of layoutWords(text, CW - 104)) {
+      g.fillText(row.map((r) => r.word).join(' '), 52, y);
+      y += 47;
+    }
+    y += 34;
+  }
+  g.fillStyle = 'rgba(255, 255, 255, 0.16)';
+  roundRect(g, CW / 2 - 102, 1268, 204, 44, 22);
+  g.fill();
+  for (let i = 0; i < 7; i++) {
+    g.fillStyle = i === 0 ? '#ffffff' : 'rgba(255, 255, 255, 0.36)';
+    g.beginPath();
+    g.arc(CW / 2 - 78 + i * 26, 1290, 7.5, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.font = `700 37px ${BODY}`;
+  g.fillStyle = 'rgba(235, 235, 245, 0.6)';
+  g.fillText('Skip', 52, 1404);
+  g.fillStyle = SYSTEM_BLUE;
+  roundRect(g, CW - 44 - 290, 1358, 290, 92, 46);
+  g.fill();
+  g.fillStyle = '#ffffff';
+  g.textAlign = 'center';
+  g.fillText('Next', CW - 44 - 145, 1405);
+  g.globalAlpha = 1;
+}
+
 // Poses: x and y in fractions of half the visible width and height, angles
 // in radians, s = the phone's height as a fraction of the visible height.
 const SCENES = {
@@ -768,8 +844,8 @@ const SCENES = {
   },
   get: {
     desk: [0.5, 0.0, -0.05, -0.36, 0.03, 0.72], mob: [0, 0.42, -0.04, -0.26, 0.02, 0.42],
-    glow: '#ffd23d', rings: 'voices', settle: HERO_PERIOD - 1.4,
-    draw: (t) => drawCaptionScreen(t),
+    glow: '#ffd23d', rings: 'voices', settle: 1,
+    draw: drawWelcome,
   },
 };
 
@@ -826,8 +902,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131128'),
-    loader.loadAsync('models/back-rough.png?v=202610131128'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131156'),
+    loader.loadAsync('models/back-rough.png?v=202610131156'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -900,7 +976,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131128');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131156');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
