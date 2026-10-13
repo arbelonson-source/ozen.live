@@ -364,5 +364,18 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .doc table { border-collapse: collapse; width: 100%; margin: 0 0 1.4rem; font-size: 1rem; }
 .doc th, .doc td { text-align: left; vertical-align: top; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); }
 .doc th { font-family: var(--display); font-weight: 700; }
+/* Narrow screens: each row becomes a block, with the column heading shown
+   above each value. */
+@media (max-width: 30rem) {
+  .doc thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .doc table, .doc tbody, .doc tr, .doc td { display: block; }
+  .doc tr { padding: 0.75rem 0; border-bottom: 1px solid var(--line); }
+  .doc td { padding: 0.1rem 0; border: 0; }
+  .doc td:first-child { font-weight: 700; margin-bottom: 0.3rem; }
+  .doc td:not(:first-child)::before {
+    content: attr(data-label) ": ";
+    color: var(--muted);
+  }
+}
 
 .no-webgl .stage { display: none; }
