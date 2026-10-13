@@ -38,7 +38,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch(asset('models/phone.glb?v=202610131452'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202610131514'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -121,10 +121,17 @@ function drawCode(g, x, y, size) {
 // ---------------------------------------------------------------------------
 // The phone's screen: a 2D canvas redrawn as the scene plays
 
-const screenCanvas = document.createElement('canvas');
-screenCanvas.width = Math.round(CW * SCREEN_SCALE);
-screenCanvas.height = Math.round(CH * SCREEN_SCALE);
-const screen2d = screenCanvas.getContext('2d');
+// When a phone's graphics process restarts, a canvas drawn on the graphics
+// chip can come back blank, so the screen gets a fresh canvas then (see
+// renewScreen below).
+let screenCanvas, screen2d;
+function newScreenCanvas() {
+  screenCanvas = document.createElement('canvas');
+  screenCanvas.width = Math.round(CW * SCREEN_SCALE);
+  screenCanvas.height = Math.round(CH * SCREEN_SCALE);
+  screen2d = screenCanvas.getContext('2d');
+}
+newScreenCanvas();
 
 // The screen is drawn into a recording first, and the real canvas (and its
 // copy into the 3D scene) only changes when the recorded commands differ
@@ -163,6 +170,8 @@ const recording = (() => {
   return {
     g: proxy,
     begin() { ops = []; },
+    // The next finish() paints even an unchanged recording (the canvas was wiped).
+    forget() { last = []; },
     // Paints the recording if it differs from the last one; says whether it did.
     finish() {
       if (same(ops, last)) return false;
@@ -905,7 +914,7 @@ const SCENES = {
 function lensTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 256;
-  const x = c.getContext('2d');
+  const x = c.getContext('2d', { willReadFrequently: true });
   const base = x.createRadialGradient(128, 128, 0, 128, 128, 128);
   base.addColorStop(0, '#04060b');
   base.addColorStop(0.2, '#101a36');
@@ -951,8 +960,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync(asset('models/back-colour.jpg?v=202610131452')),
-    loader.loadAsync(asset('models/back-rough.png?v=202610131452')),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202610131514')),
+    loader.loadAsync(asset('models/back-rough.png?v=202610131514')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -1028,7 +1037,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131452'));
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131514'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1053,7 +1062,7 @@ laptopCanvas.width = 1024;
 laptopCanvas.height = 640;
 
 function drawLaptop(connected) {
-  const l = laptopCanvas.getContext('2d');
+  const l = laptopCanvas.getContext('2d', { willReadFrequently: true });
   const grad = l.createLinearGradient(0, 0, 1024, 640);
   grad.addColorStop(0, '#1b3560');
   grad.addColorStop(1, '#0d1729');
@@ -1079,7 +1088,7 @@ function drawLaptop(connected) {
 function makeGlowTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 256;
-  const x = c.getContext('2d');
+  const x = c.getContext('2d', { willReadFrequently: true });
   const grad = x.createRadialGradient(128, 128, 0, 128, 128, 128);
   grad.addColorStop(0, 'rgba(255,255,255,0.9)');
   grad.addColorStop(0.35, 'rgba(255,255,255,0.32)');
@@ -1517,12 +1526,21 @@ async function start() {
     try { await renderer.compileAsync(scene, camera); } catch (err) { /* compiled on first draw instead */ }
   }
 
+  // The phone's screen moves to a fresh canvas and is painted in full,
+  // not only when its picture next changes.
+  function renewScreen() {
+    newScreenCanvas();
+    screenTexture.image = screenCanvas;
+    recording.forget();
+    redraw();
+  }
+
   // three.js rebuilds its own state when the context returns; the studio
   // lighting was rendered on the graphics chip, so it's made again here.
   canvas.addEventListener('webglcontextrestored', () => {
     scene.environment = makeEnvironment();
     contextLost = false;
-    redraw();
+    renewScreen();
     stage.classList.add('ready');
   });
 
