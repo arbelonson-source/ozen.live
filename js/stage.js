@@ -33,9 +33,12 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // The phone model starts downloading as soon as this script runs, while the
 // 3D library is still on its way. (A <link rel=preload> for it made Safari
 // download it twice.)
+// Site files are found from this script's own address, so pages in a
+// sub-folder (he/) load the same files.
+const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131403', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202610131452'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -44,8 +47,14 @@ phoneBytes.catch(() => {});
 const TOUCH = window.matchMedia('(pointer: coarse)').matches;
 const SCREEN_SCALE = TOUCH ? 0.5 : 1;
 
-const BODY = '"Atkinson Hyperlegible", system-ui, sans-serif';
+// The Hebrew pages (he/) show the app as it looks in Hebrew: right to left,
+// with the app's own Hebrew wording.
+const HE = document.documentElement.lang === 'he';
+const BODY = HE ? '"Rubik", system-ui, sans-serif' : '"Atkinson Hyperlegible", system-ui, sans-serif';
 const DISPLAY = '"Rubik", system-ui, sans-serif';
+// A left edge (or a point, w = 0) measured from the screen's left, moved to
+// the other side for right-to-left screens. Text uses textAlign 'start'.
+const X = (x, w = 0) => (HE ? CW - x - w : x);
 const C = {
   text: '#ffffff',
   old: '#9aa3af',
@@ -177,11 +186,11 @@ function clearScreen(colour = '#000000') {
 function statusBar(airplane = false, light = false) {
   const ink = light ? '#000000' : '#ffffff';
   g.textBaseline = 'middle';
-  g.textAlign = 'left';
+  g.textAlign = HE ? 'right' : 'left';
   g.fillStyle = ink;
   g.font = `700 30px ${BODY}`;
-  g.fillText('10:24', 70, 62);
-  const x = CW - 66;
+  g.fillText('10:24', X(70), 62);
+  const x = HE ? 66 + 124 : CW - 66;
   g.strokeStyle = ink;
   g.lineWidth = 3;
   roundRect(g, x - 52, 50, 46, 24, 7);
@@ -251,24 +260,24 @@ function iconButton(x, y, kind) {
 // The row of buttons along the bottom of the caption screen.
 function controls() {
   const y = CH - 120;
-  iconButton(84, y, 'mic');
+  iconButton(X(84), y, 'mic');
   g.fillStyle = C.chrome;
-  roundRect(g, 146, y - 50, 330, 100, 50);
+  roundRect(g, X(146, 330), y - 50, 330, 100, 50);
   g.fill();
   g.fillStyle = C.green;
   g.beginPath();
-  g.arc(192, y, 11, 0, Math.PI * 2);
+  g.arc(X(192), y, 11, 0, Math.PI * 2);
   g.fill();
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.textBaseline = 'middle';
   g.fillStyle = C.text;
   g.font = `700 32px ${BODY}`;
-  g.fillText('Listening', 218, y - 14);
+  g.fillText(S.listening, X(218), y - 14);
   g.fillStyle = C.muted;
   g.font = `400 24px ${BODY}`;
-  g.fillText('Tap to pause', 218, y + 20);
-  iconButton(548, y, 'say');
-  iconButton(648, y, 'gear');
+  g.fillText(S.tapToPause, X(218), y + 20);
+  iconButton(X(548), y, 'say');
+  iconButton(X(648), y, 'gear');
 }
 
 function layoutWords(text, maxW) {
@@ -310,22 +319,23 @@ function captionBlock(entries, bottom, top, size = 54) {
     placed.push({ e, rows, y });
     y -= 26;
   }
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.textBaseline = 'middle';
+  const dir = HE ? -1 : 1;
   for (const { e, rows, y: y0 } of placed) {
     let ry = y0;
     if (e.speaker) {
       g.font = `700 32px ${BODY}`;
       g.fillStyle = e.colour;
-      g.fillText(e.speaker, 56, ry + 18);
+      g.fillText(e.speaker, X(56), ry + 18);
       g.beginPath();
-      g.arc(56 + g.measureText(e.speaker).width + 20, ry + 18, 9, 0, Math.PI * 2);
+      g.arc(X(56 + g.measureText(e.speaker).width + 20), ry + 18, 9, 0, Math.PI * 2);
       g.fill();
       ry += 44;
     }
     g.font = `700 ${size}px ${BODY}`;
     for (const row of rows) {
-      let x = 56;
+      let x = X(56);
       const cy = ry + lh / 2;
       for (const { word, w } of row) {
         const m = /^(.*?)([,.!?]*)$/.exec(word);
@@ -334,17 +344,17 @@ function captionBlock(entries, bottom, top, size = 54) {
         if (e.name && core === e.name) {
           const cw = g.measureText(core).width;
           g.fillStyle = C.yellow;
-          roundRect(g, x - 8, cy - size * 0.62, cw + 16, size * 1.24, 14);
+          roundRect(g, HE ? x - cw - 8 : x - 8, cy - size * 0.62, cw + 16, size * 1.24, 14);
           g.fill();
           g.fillStyle = C.ink;
           g.fillText(core, x, cy);
           g.fillStyle = e.dim ? C.old : C.text;
-          g.fillText(punct, x + cw, cy);
+          g.fillText(punct, x + dir * cw, cy);
         } else {
           g.fillStyle = /\d/.test(word) ? C.yellow : (e.dim ? C.old : C.text);
           g.fillText(word, x, cy);
         }
-        x += w + space;
+        x += dir * (w + space);
       }
       ry += lh;
     }
@@ -405,20 +415,46 @@ function wrapCentered(text, y, size, colour, weight = 400, family = BODY, maxW =
 // ---------------------------------------------------------------------------
 // Scenes: what the phone shows, where it stands, and the light around it
 
-const HERO_HISTORY = [{ text: 'Hi Grandma, we brought you lunch.' }];
-const HERO_LINES = [
-  { text: 'Good morning! Did you sleep well?' },
-  { text: 'The pharmacy closes early on Friday.' },
-  { text: "Let's go tomorrow at 10." },
-  { text: 'Do you want me to drive you there?' },
-];
+// Everything the phone says, in the page's language. The Hebrew is the
+// app's own wording where the app has it (App/Ozen/Views, tr(...)).
+const S = HE ? {
+  listening: 'מקשיב', tapToPause: 'הקישו כדי להשהות',
+  heroHistory: 'היי סבתא, הבאנו לך צהריים.',
+  hero: ['בוקר טוב! ישנת טוב?', 'בית המרקחת נסגר מוקדם ביום שישי.', 'בואי נלך מחר ב-10.', 'רוצה שאסיע אותך לשם?'],
+  speakers: [['נועה', 'אתם באים בשבת?'], ['אבא', 'נהיה שם עד 12.'], ['נועה', 'מעולה! תביאו את העוגה.']],
+  nameLine: 'סבתא, רוצה תה?', name: 'סבתא', said: 'נאמר: סבתא',
+  houseLines: ['רוצה תה?', 'כן, בבקשה, עם לימון.'], doorbell: 'פעמון דלת', heardNow: 'נשמע עכשיו',
+  say: 'להגיד', reply: 'אפשר לדבר קצת יותר לאט, בבקשה?', play: 'להשמיע', stop: 'עצירה',
+  quickPhrases: 'משפטים מוכנים', phrases: ['רגע, לא הבנתי', 'אפשר לחזור על זה?', 'לאט יותר בבקשה', 'כן', 'תודה'],
+  letters: 'נתראה מחר ב-10', clear: 'ניקוי', flip: 'להפוך', back: 'חזרה', speak: 'להשמיע', close: 'סגירה',
+  noInternet: 'לא צריך אינטרנט',
+  pointCamera: 'מכוונים את המצלמה אל הקוד שבמחשב', connected: 'מחובר', connectedNote: 'הכתוביות מגיעות עכשיו מהמחשב בבית.',
+  welcomeTitle: 'אוזן', welcome: ['כתוביות חיות לשיחה.', 'מה שאומרים לידך מופיע על המסך, באותיות גדולות, תוך כדי הדיבור.', 'הכל קורה בתוך הטלפון. שום דבר לא נשלח לאינטרנט.'],
+  skip: 'דילוג', next: 'הבא',
+  pause: 'השהיית האנימציה', resume: 'הפעלת האנימציה',
+} : {
+  listening: 'Listening', tapToPause: 'Tap to pause',
+  heroHistory: 'Hi Grandma, we brought you lunch.',
+  hero: ['Good morning! Did you sleep well?', 'The pharmacy closes early on Friday.', "Let's go tomorrow at 10.", 'Do you want me to drive you there?'],
+  speakers: [['Noa', 'Are you coming on Saturday?'], ['Dad', "We'll be there by 12."], ['Noa', 'Great! Bring the cake.']],
+  nameLine: 'Grandma, do you want some tea?', name: 'Grandma', said: 'Said: Grandma',
+  houseLines: ['Do you want some tea?', 'Yes please, with lemon.'], doorbell: 'Doorbell', heardNow: 'Heard just now',
+  say: 'Say', reply: 'Could you speak a little slower, please?', play: 'Play', stop: 'Stop',
+  quickPhrases: 'Quick phrases', phrases: ["Wait, I didn't catch that", 'Could you say that again?', 'Slower, please', 'Yes', 'Thank you'],
+  letters: 'See you tomorrow at 10', clear: 'Clear', flip: 'Flip', back: 'Back', speak: 'Speak', close: 'Close',
+  noInternet: 'No internet needed',
+  pointCamera: 'Point the camera at the code on the computer', connected: 'Connected', connectedNote: 'Captions now use your home computer.',
+  welcomeTitle: 'Ozen', welcome: ['Live captions for conversation.', 'What’s said near you appears on the screen, in large letters, as it’s spoken.', 'It all happens on the phone. Nothing is sent to the internet.'],
+  skip: 'Skip', next: 'Next',
+  pause: 'Pause animation', resume: 'Play animation',
+};
+
+const HERO_HISTORY = [{ text: S.heroHistory }];
+const HERO_LINES = S.hero.map((text) => ({ text }));
 const HERO_PERIOD = transcriptPeriod(HERO_LINES);
 
-const SPEAKER_LINES = [
-  { speaker: 'Noa', colour: '#c9a2ff', ring: '#8f4dff', text: 'Are you coming on Saturday?' },
-  { speaker: 'Dad', colour: '#7ee2a8', ring: '#19c96a', text: "We'll be there by 12." },
-  { speaker: 'Noa', colour: '#c9a2ff', ring: '#8f4dff', text: 'Great! Bring the cake.' },
-];
+const VOICES = [{ colour: '#c9a2ff', ring: '#8f4dff' }, { colour: '#7ee2a8', ring: '#19c96a' }];
+const SPEAKER_LINES = S.speakers.map(([speaker, text], i) => ({ speaker, text, ...VOICES[i % 2] }));
 const SPEAKER_PERIOD = transcriptPeriod(SPEAKER_LINES);
 
 function drawCaptionScreen(t, { airplane = false, lines = HERO_LINES, history = HERO_HISTORY } = {}) {
@@ -429,22 +465,22 @@ function drawCaptionScreen(t, { airplane = false, lines = HERO_LINES, history = 
 }
 
 const CALLED_PERIOD = 5.6;
-const NAME_LINE = { text: 'Grandma, do you want some tea?', name: 'Grandma' };
+const NAME_LINE = { text: S.nameLine, name: S.name };
 
 function drawCalled(t) {
   const tt = t % CALLED_PERIOD;
   clearScreen();
   statusBar();
   const entries = [
-    { text: 'The pharmacy closes early on Friday.', dim: true },
-    { text: "Let's go tomorrow at 10.", dim: false },
+    { text: S.hero[1], dim: true },
+    { text: S.hero[2], dim: false },
   ];
   const n = clamp(Math.floor((tt - 0.4) * 26), 0, NAME_LINE.text.length);
   if (n > 0) entries.push({ ...NAME_LINE, text: NAME_LINE.text.slice(0, n) });
   captionBlock(entries, CH - 236, 150);
   if (tt > 0.72 && tt < 4.9) {
     g.globalAlpha = smooth(0.72, 0.95, tt) * (1 - smooth(4.5, 4.9, tt));
-    pill('Said: Grandma', 132, C.yellow, C.ink);
+    pill(S.said, 132, C.yellow, C.ink);
     g.globalAlpha = 1;
   }
   controls();
@@ -457,8 +493,8 @@ function drawHouse(t) {
   clearScreen();
   statusBar();
   captionBlock([
-    { text: 'Do you want some tea?', dim: true },
-    { text: 'Yes please, with lemon.', dim: false },
+    { text: S.houseLines[0], dim: true },
+    { text: S.houseLines[1], dim: false },
   ], CH - 236, 150);
   controls();
   const lit = (tt > 0.5 && tt < 0.9) || (tt > 1.3 && tt < 1.7);
@@ -479,7 +515,7 @@ function drawHouse(t) {
     g.fillStyle = C.ink;
     g.strokeStyle = C.ink;
     g.lineWidth = 5;
-    const bx = 108, by = y + 70;
+    const bx = X(108), by = y + 70;
     g.beginPath();
     g.moveTo(bx - 26, by + 18);
     g.quadraticCurveTo(bx - 22, by - 32, bx, by - 32);
@@ -489,27 +525,27 @@ function drawHouse(t) {
     g.beginPath();
     g.arc(bx, by + 24, 7, 0, Math.PI * 2);
     g.fill();
-    g.textAlign = 'left';
+    g.textAlign = 'start';
     g.textBaseline = 'middle';
     g.font = `800 46px ${DISPLAY}`;
-    g.fillText('Doorbell', 160, y + 52);
+    g.fillText(S.doorbell, X(160), y + 52);
     g.font = `400 28px ${BODY}`;
-    g.fillText('Heard just now', 160, y + 98);
+    g.fillText(S.heardNow, X(160), y + 98);
   }
 }
 
-const REPLY_TEXT = 'Could you speak a little slower, please?';
+const REPLY_TEXT = S.reply;
 const REPLY_PERIOD = 6.8;
 
 function drawReply(t, clock) {
   const tt = t % REPLY_PERIOD;
   clearScreen();
   statusBar();
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.textBaseline = 'alphabetic';
   g.fillStyle = C.text;
   g.font = `800 66px ${DISPLAY}`;
-  g.fillText('Say', 54, 196);
+  g.fillText(S.say, X(54), 196);
   g.fillStyle = C.chrome;
   roundRect(g, 40, 236, CW - 80, 330, 36);
   g.fill();
@@ -518,12 +554,12 @@ function drawReply(t, clock) {
   g.font = `700 48px ${BODY}`;
   g.textBaseline = 'middle';
   const rows = layoutWords(typed, CW - 160);
-  let endX = 80, endY = 300;
+  let endX = X(80), endY = 300;
   rows.forEach((row, i) => {
     const line = row.map((r) => r.word).join(' ');
     g.fillStyle = C.text;
-    g.fillText(line, 80, 300 + i * 64);
-    endX = 80 + g.measureText(line).width + 6;
+    g.fillText(line, X(80), 300 + i * 64);
+    endX = X(80 + g.measureText(line).width + 6, 5);
     endY = 300 + i * 64;
   });
   if (n < REPLY_TEXT.length && Math.floor(clock * 2.2) % 2 === 0) {
@@ -537,32 +573,32 @@ function drawReply(t, clock) {
   g.fillStyle = C.ink;
   g.font = `800 46px ${DISPLAY}`;
   g.textAlign = 'center';
-  g.fillText(speaking ? 'Stop' : 'Play', CW / 2 + (speaking ? 40 : 0), 666);
+  g.fillText(speaking ? S.stop : S.play, CW / 2 + (speaking ? (HE ? -40 : 40) : 0), 666);
   if (speaking) {
     for (let i = 0; i < 5; i++) {
       const h = 18 + Math.abs(Math.sin(clock * 9 + i * 1.3)) * 44;
-      g.fillRect(CW / 2 - 120 + i * 18, 666 - h / 2, 10, h);
+      g.fillRect(X(CW / 2 - 120 + i * 18, 10), 666 - h / 2, 10, h);
     }
   }
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.fillStyle = C.muted;
   g.font = `700 30px ${BODY}`;
-  g.fillText('Quick phrases', 54, 800);
+  g.fillText(S.quickPhrases, X(54), 800);
   let x = 40, y = 840;
-  for (const phrase of ['Please say that again', 'Thank you', 'One moment, please', 'I am hard of hearing']) {
+  for (const phrase of S.phrases) {
     g.font = `700 32px ${BODY}`;
     const w = g.measureText(phrase).width + 48;
     if (x + w > CW - 40) { x = 40; y += 96; }
     g.fillStyle = C.chrome;
-    roundRect(g, x, y, w, 76, 38);
+    roundRect(g, X(x, w), y, w, 76, 38);
     g.fill();
     g.fillStyle = C.chromeText;
-    g.fillText(phrase, x + 24, y + 39);
+    g.fillText(phrase, X(x + 24), y + 39);
     x += w + 16;
   }
 }
 
-const LETTERS_TEXT = 'See you tomorrow at 10';
+const LETTERS_TEXT = S.letters;
 
 // The app's Flip turns the words upside down on the screen, for the person
 // across the table; the phone itself stays where it is.
@@ -622,7 +658,7 @@ function drawLetters(t) {
   const areaTop = 130, areaBottom = gridTop - 20;
 
   g.font = `700 100px ${DISPLAY}`;
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.textBaseline = 'alphabetic';
   const rows = layoutWords(text, CW - 100);
   const lh = 116;
@@ -632,33 +668,35 @@ function drawLetters(t) {
     g.translate(CW / 2, (areaTop + areaBottom) / 2);
     g.rotate(Math.PI);
     const top = -(rows.length * lh) / 2;
-    rows.forEach((row, i) => g.fillText(row.map((r) => r.word).join(' '), -CW / 2 + 50, top + (i + 0.8) * lh));
+    rows.forEach((row, i) => g.fillText(row.map((r) => r.word).join(' '), X(50) - CW / 2, top + (i + 0.8) * lh));
     g.restore();
   } else {
-    rows.forEach((row, i) => g.fillText(row.map((r) => r.word).join(' '), 50, areaTop + 40 + (i + 0.8) * lh));
+    rows.forEach((row, i) => g.fillText(row.map((r) => r.word).join(' '), X(50), areaTop + 40 + (i + 0.8) * lh));
     const last = rows.length ? rows[rows.length - 1] : [];
     const lastW = last.length ? g.measureText(last.map((r) => r.word).join(' ')).width : 0;
     if (Math.floor(t * 2) % 2 === 0 || typed < LETTERS_TEXT.length) {
       g.fillStyle = '#0a84ff';
-      g.fillRect(50 + lastW + 6, areaTop + 40 + Math.max(rows.length - 1, 0) * lh + 6, 6, lh - 12);
+      g.fillRect(X(50 + lastW + 6, 6), areaTop + 40 + Math.max(rows.length - 1, 0) * lh + 6, 6, lh - 12);
     }
   }
 
-  const buttons = [['eraser', 'Clear'], ['flip', flipped ? 'Back' : 'Flip'], ['speak', 'Speak'], ['close', 'Close']];
+  const buttons = [['eraser', S.clear], ['flip', flipped ? S.back : S.flip], ['speak', S.speak], ['close', S.close]];
   buttons.forEach(([icon, label], i) => {
-    const x = pad + (i % 2) * (bw + gap);
+    const x = X(pad + (i % 2) * (bw + gap), bw);
     const y = gridTop + Math.floor(i / 2) * (bh + gap);
     g.fillStyle = icon === 'flip' && press ? '#5a5a5e' : '#3a3a3c';
     roundRect(g, x, y, bw, bh, 22);
     g.fill();
     g.font = `700 36px ${BODY}`;
-    g.textAlign = 'left';
+    g.textAlign = 'start';
     g.textBaseline = 'middle';
     const tw = g.measureText(label).width;
-    const left = x + (bw - (tw + 58)) / 2;
-    glyph(icon, left + 18, y + bh / 2, 34);
+    // Icon then label, centred together; the icon leads on the reading side.
+    const start = HE ? x + bw - (bw - (tw + 58)) / 2 : x + (bw - (tw + 58)) / 2;
+    const dir = HE ? -1 : 1;
+    glyph(icon, start + dir * 18, y + bh / 2, 34);
     g.fillStyle = C.chromeText;
-    g.fillText(label, left + 58, y + bh / 2 + 2);
+    g.fillText(label, start + dir * 58, y + bh / 2 + 2);
   });
 }
 
@@ -688,7 +726,7 @@ function drawHome(t) {
       g.lineTo(cx + sx * (half - 60), cy + sy * half);
       g.stroke();
     }
-    wrapCentered('Point the camera at the code on the computer', CH - 330, 38, C.text, 700);
+    wrapCentered(S.pointCamera, CH - 330, 38, C.text, 700);
   } else {
     clearScreen();
     statusBar();
@@ -706,8 +744,8 @@ function drawHome(t) {
     g.lineTo(CW / 2 - 10, 594);
     g.lineTo(CW / 2 + 46, 530);
     g.stroke();
-    wrapCentered('Connected', 740, 64, C.text, 800, DISPLAY);
-    wrapCentered('Captions now use your home computer.', 830, 36, C.muted);
+    wrapCentered(S.connected, 740, 64, C.text, 800, DISPLAY);
+    wrapCentered(S.connectedNote, 830, 36, C.muted);
     g.globalAlpha = 1;
   }
 }
@@ -721,27 +759,23 @@ function drawPrivate(t) {
   g.globalAlpha = 1;
   g.fillStyle = C.green;
   g.beginPath();
-  g.arc(170, 168, 18, 0, Math.PI * 2);
+  g.arc(X(170), 168, 18, 0, Math.PI * 2);
   g.fill();
   g.strokeStyle = '#06210d';
   g.lineWidth = 5;
   g.beginPath();
-  g.moveTo(161, 168); g.lineTo(168, 175); g.lineTo(180, 160);
+  g.moveTo(X(170) - 9, 168); g.lineTo(X(170) - 2, 175); g.lineTo(X(170) + 10, 160);
   g.stroke();
   g.fillStyle = C.text;
   g.font = `700 30px ${BODY}`;
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   g.textBaseline = 'middle';
-  g.fillText('No internet needed', 204, 169);
+  g.fillText(S.noInternet, X(204), 169);
 }
 
 // The app's first screen, as it looks the first time it's opened: the ear
 // symbol, the name, three sentences, page dots, Skip and Next.
-const WELCOME_TEXT = [
-  'Live captions for conversation.',
-  'What’s said near you appears on the screen, in large letters, as it’s spoken.',
-  'It all happens on the phone. Nothing is sent to the internet.',
-];
+const WELCOME_TEXT = S.welcome;
 const SYSTEM_BLUE = '#0a84ff';
 
 function earSymbol(cx, cy, size) {
@@ -779,13 +813,13 @@ function drawWelcome(t) {
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.font = `700 64px ${BODY}`;
-  g.fillText('Ozen', CW / 2, 384);
+  g.fillText(S.welcomeTitle, CW / 2, 384);
   g.font = `400 37px ${BODY}`;
-  g.textAlign = 'left';
+  g.textAlign = 'start';
   let y = 470;
   for (const text of WELCOME_TEXT) {
     for (const row of layoutWords(text, CW - 104)) {
-      g.fillText(row.map((r) => r.word).join(' '), 52, y);
+      g.fillText(row.map((r) => r.word).join(' '), X(52), y);
       y += 47;
     }
     y += 34;
@@ -796,18 +830,18 @@ function drawWelcome(t) {
   for (let i = 0; i < 7; i++) {
     g.fillStyle = i === 0 ? '#ffffff' : 'rgba(255, 255, 255, 0.36)';
     g.beginPath();
-    g.arc(CW / 2 - 78 + i * 26, 1290, 7.5, 0, Math.PI * 2);
+    g.arc(X(CW / 2 - 78 + i * 26), 1290, 7.5, 0, Math.PI * 2);
     g.fill();
   }
   g.font = `700 37px ${BODY}`;
   g.fillStyle = 'rgba(235, 235, 245, 0.6)';
-  g.fillText('Skip', 52, 1404);
+  g.fillText(S.skip, X(52), 1404);
   g.fillStyle = SYSTEM_BLUE;
-  roundRect(g, CW - 44 - 290, 1358, 290, 92, 46);
+  roundRect(g, X(CW - 44 - 290, 290), 1358, 290, 92, 46);
   g.fill();
   g.fillStyle = '#ffffff';
   g.textAlign = 'center';
-  g.fillText('Next', CW - 44 - 145, 1405);
+  g.fillText(S.next, X(CW - 44 - 145), 1405);
   g.globalAlpha = 1;
 }
 
@@ -917,8 +951,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131403'),
-    loader.loadAsync('models/back-rough.png?v=202610131403'),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202610131452')),
+    loader.loadAsync(asset('models/back-rough.png?v=202610131452')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -994,7 +1028,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131403');
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131452'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1061,7 +1095,7 @@ async function fontsReady() {
   if (!document.fonts || !document.fonts.load) return;
   const wanted = [
     `700 40px ${BODY}`, `400 40px ${BODY}`, `800 40px ${DISPLAY}`, `700 40px ${DISPLAY}`,
-  ].map((f) => document.fonts.load(f));
+  ].map((f) => document.fonts.load(f, HE ? 'אוזן Ozen' : 'Ozen'));
   await Promise.race([Promise.all(wanted), new Promise((r) => setTimeout(r, 2500))]);
 }
 
@@ -1233,7 +1267,7 @@ async function start() {
   const syncToggle = () => {
     if (!toggle) return;
     toggle.dataset.paused = String(paused);
-    if (toggleLabel) toggleLabel.textContent = paused ? 'Play animation' : 'Pause animation';
+    if (toggleLabel) toggleLabel.textContent = paused ? S.resume : S.pause;
   };
   if (toggle) {
     toggle.hidden = false;
@@ -1366,6 +1400,7 @@ async function start() {
     if (lastDraw < 0 || (!paused && clock - lastDraw > 1 / STEPS[step].fps)) {
       recording.begin();
       g.setTransform(SCREEN_SCALE, 0, 0, SCREEN_SCALE, 0, 0);
+      g.direction = HE ? 'rtl' : 'ltr';
       def.draw(t, clock);
       if (recording.finish()) screenTexture.needsUpdate = true;
       lastDraw = clock;
@@ -1373,6 +1408,8 @@ async function start() {
 
     const narrow = !WIDE.matches;
     const [px, sy, prx, pry, prz, ps] = narrow ? def.mob : def.desk;
+    // Right-to-left pages show the whole scene mirrored: x, and turns about y and z.
+    const m = HE ? -1 : 1;
     // On short screens, lower the phone so its top stays clear of the header.
     const py = Math.min(sy, 1 - ps * Math.abs(Math.cos(prx)) - 2 * (headerBottom / height + 0.015));
     const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
@@ -1382,11 +1419,11 @@ async function start() {
     pointer.y += (pointer.ty - pointer.y) * 0.06;
     const idle = paused ? 0 : 1;
     const target = {
-      x: px * hw,
+      x: m * px * hw,
       y: py * hh + Math.sin(clock * 0.9) * 0.03 * idle,
       rx: prx + (narrow ? 0 : pointer.y * 0.08),
-      ry: pry + (def.turn ? def.turn(progress) : 0) + Math.sin(clock * 0.55) * 0.05 * idle + (narrow ? 0 : pointer.x * 0.14),
-      rz: prz,
+      ry: m * pry + (def.turn ? m * def.turn(progress) : 0) + Math.sin(clock * 0.55) * 0.05 * idle + (narrow ? 0 : pointer.x * 0.14),
+      rz: m * prz,
       s: (ps * 2 * hh) / PHONE.h,
     };
     const k = poseReady ? (paused ? 0.35 : 1 - Math.exp(-dt * 4.5)) : 1;
@@ -1410,8 +1447,8 @@ async function start() {
     if (laptop) laptop.visible = laptopShow > 0;
     if (laptop && laptop.visible) {
       laptop.scale.setScalar((narrow ? 0.42 : 0.78) * laptopShow);
-      laptop.position.set(narrow ? -0.32 * hw : 0.32 * hw, narrow ? 0.34 * hh : -0.22 * hh, narrow ? 0 : -0.4);
-      laptop.rotation.set(0.36, narrow ? 0.35 : 0.5, 0);
+      laptop.position.set(m * (narrow ? -0.32 * hw : 0.32 * hw), narrow ? 0.34 * hh : -0.22 * hh, narrow ? 0 : -0.4);
+      laptop.rotation.set(0.36, m * (narrow ? 0.35 : 0.5), 0);
       const connected = Boolean(def.laptop) && t % HOME_PERIOD >= 2.7;
       if (connected !== laptopConnected) {
         laptopConnected = connected;
@@ -1431,21 +1468,21 @@ async function start() {
       ringTimer -= dt;
       if (ringTimer <= 0) {
         if (def.rings === 'voices') {
-          emit(tmp.set(pose.x - (narrow ? 0.9 : 1.7), pose.y + 0.5, -0.6), '#8db4ff', { reach: 1.4, life: 2.2, strength: 0.28 });
+          emit(tmp.set(pose.x - m * (narrow ? 0.9 : 1.7), pose.y + 0.5, -0.6), '#8db4ff', { reach: 1.4, life: 2.2, strength: 0.28 });
           ringTimer = 0.9;
         } else if (def.rings === 'speakers') {
           // Each voice in its own colour, from its own side of the phone.
           const i = speakingLine(SPEAKER_LINES, t);
           if (i >= 0) {
             const line = SPEAKER_LINES[i];
-            const side = line.speaker === SPEAKER_LINES[0].speaker ? -1 : 1;
+            const side = m * (line.speaker === SPEAKER_LINES[0].speaker ? -1 : 1);
             emit(tmp.set(pose.x + side * (narrow ? 0.9 : 1.5), pose.y + 0.5, -0.6), line.ring, { reach: 1.4, life: 2.2, strength: 0.6 });
           }
           ringTimer = 0.6;
         } else if (def.rings === 'doorbell') {
           const tt = t % HOUSE_PERIOD;
           if (tt > 0.25 && tt < 2.0) {
-            emit(tmp.set(pose.x - (narrow ? 0.8 : 2.4), pose.y + (narrow ? 0.9 : 1.1), -0.4), '#ffb547', { reach: 1.9, life: 1.3, strength: 0.75 });
+            emit(tmp.set(pose.x - m * (narrow ? 0.8 : 2.4), pose.y + (narrow ? 0.9 : 1.1), -0.4), '#ffb547', { reach: 1.9, life: 1.3, strength: 0.75 });
           }
           ringTimer = 0.28;
         } else if (def.rings === 'speaker') {

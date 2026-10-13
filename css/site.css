@@ -35,85 +35,31 @@
   src: url(../fonts/AtkinsonHyperlegible-700-latin.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/* hebrew */
+/* hebrew: one variable file for every weight */
 @font-face {
   font-family: 'Rubik';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 300 900;
   font-display: swap;
-  src: url(../fonts/Rubik-500-hebrew.woff2) format('woff2');
+  src: url(../fonts/Rubik-hebrew.woff2) format('woff2');
   unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
 }
-/* latin-ext */
+/* latin-ext: one variable file for every weight */
 @font-face {
   font-family: 'Rubik';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 300 900;
   font-display: swap;
-  src: url(../fonts/Rubik-500-latin-ext.woff2) format('woff2');
+  src: url(../fonts/Rubik-latin-ext.woff2) format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-/* latin */
+/* latin: one variable file for every weight */
 @font-face {
   font-family: 'Rubik';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 300 900;
   font-display: swap;
-  src: url(../fonts/Rubik-500-latin.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* hebrew */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(../fonts/Rubik-700-hebrew.woff2) format('woff2');
-  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(../fonts/Rubik-700-latin-ext.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(../fonts/Rubik-700-latin.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* hebrew */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url(../fonts/Rubik-800-hebrew.woff2) format('woff2');
-  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url(../fonts/Rubik-800-latin-ext.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url(../fonts/Rubik-800-latin.woff2) format('woff2');
+  src: url(../fonts/Rubik-latin.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -134,6 +80,11 @@
   --measure: 34rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
 }
+
+/* The Hebrew pages set everything in Rubik, which has Hebrew letters, and
+   drop the tight heading tracking that only suits Latin capitals. */
+:root:lang(he) { --body: "Rubik", system-ui, sans-serif; }
+:lang(he) h1, :lang(he) h2, :lang(he) h3 { letter-spacing: 0; }
 
 * { box-sizing: border-box; }
 
@@ -173,7 +124,7 @@ a:hover { text-decoration-thickness: 0.14em; }
 
 .skip-link {
   position: absolute;
-  left: 1rem;
+  inset-inline-start: 1rem;
   top: -4rem;
   z-index: 50;
   padding: 0.75rem 1.1rem;
@@ -255,11 +206,42 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   border-radius: 0.6rem;
 }
 .site-nav a:hover { background: rgba(255, 255, 255, 0.08); }
+.site-nav .lang-switch {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 2px solid rgba(246, 243, 236, 0.35);
+}
+.site-nav .lang-switch:hover { border-color: var(--paper); background: transparent; }
+.lang-switch:lang(he) { font-family: "Rubik", system-ui, sans-serif; }
 .site-nav .nav-get { background: var(--yellow); color: var(--yellow-ink); }
 .site-nav .nav-get:hover { background: #fff07a; }
 
 @media (max-width: 34rem) {
   .site-nav .nav-optional { display: none; }
+}
+
+/* Small phones: the language link, the pause button and Get Ozen still fit
+   on one line beside the name. */
+.site-nav a { white-space: nowrap; }
+@media (max-width: 24.5rem) {
+  .site-header { gap: 0.5rem; }
+  .site-nav { gap: 0.3rem; }
+  .site-nav a { padding: 0.5rem 0.65rem; }
+  .site-nav .lang-switch { padding: 0.4rem 0.6rem; }
+  .brand { gap: 0.5rem; font-size: 1.2rem; }
+  .brand img { width: 2.1rem; height: 2.1rem; }
+}
+@media (max-width: 22rem) {
+  .brand span {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0; border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 
 /* Buttons */
@@ -330,26 +312,26 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .note {
   font-size: 1rem;
   color: var(--muted);
-  border-left: 3px solid var(--amber);
-  padding-left: 0.9rem;
+  border-inline-start: 3px solid var(--amber);
+  padding-inline-start: 0.9rem;
   margin-top: 1.4rem;
 }
 
 .get-list { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; gap: 1rem; }
-.get-list li { padding-left: 1.1rem; border-left: 3px solid var(--line); }
+.get-list li { padding-inline-start: 1.1rem; border-inline-start: 3px solid var(--line); }
 .get-list strong { display: block; font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
 
 /* Landscape screens at least 600 px wide (computers, tablets on their side,
    phones turned sideways) put the text beside the phone; everything else
    stacks the text below it. js/stage.js uses the same test (WIDE). */
 @media (min-aspect-ratio: 1/1) and (min-width: 37.5rem) {
-  .chapter { padding-left: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter))); }
+  .chapter { padding-inline-start: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter))); }
   .chapter-text { width: 46%; max-width: var(--measure); }
   /* One chapter swaps sides, so the phone crosses the page on the way. */
   .chapter-mirror {
     justify-content: flex-end;
-    padding-left: var(--gutter);
-    padding-right: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter)));
+    padding-inline-start: var(--gutter);
+    padding-inline-end: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter)));
   }
 }
 
@@ -482,6 +464,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 }
 .site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; }
 .site-footer a { color: var(--paper); }
+.footer-lang-note { margin: 0.75rem 0 0; font-size: 0.95rem; }
 
 /* Legal and information pages */
 
@@ -497,18 +480,18 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .doc h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); margin: 2.6rem 0 0.9rem; }
 .doc h3 { font-size: 1.25rem; margin: 1.8rem 0 0.6rem; font-weight: 700; }
 .doc p, .doc li { color: #e4e9f1; }
-.doc ul, .doc ol { padding-left: 1.3rem; margin: 0 0 1em; }
+.doc ul, .doc ol { padding-inline-start: 1.3rem; margin: 0 0 1em; }
 .doc li { margin-bottom: 0.45rem; }
 .doc .callout {
   background: var(--ink-raised);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--amber);
+  border-inline-start: 4px solid var(--amber);
   border-radius: 0.9rem;
   padding: 1.1rem 1.3rem 0.3rem;
   margin: 1.6rem 0;
 }
 .doc table { border-collapse: collapse; width: 100%; margin: 0 0 1.4rem; font-size: 1rem; }
-.doc th, .doc td { text-align: left; vertical-align: top; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); }
+.doc th, .doc td { text-align: start; vertical-align: top; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); }
 .doc th { font-family: var(--display); font-weight: 700; }
 /* Narrow screens: each row becomes a block, with the column heading shown
    above each value. */
