@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131225', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131254', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -806,7 +806,8 @@ const SCENES = {
     draw: (t) => drawCaptionScreen(t),
   },
   called: {
-    desk: [0.47, 0.02, 0.02, -0.2, -0.03, 0.74], mob: [0, 0.42, 0.02, -0.16, -0.02, 0.43],
+    // Lying on the table, as a phone is when you've looked away from it.
+    desk: [0.5, -0.04, -0.82, 0.0, 0.32, 0.72], mob: [0, 0.4, -0.82, 0, 0.2, 0.5],
     glow: '#ffd23d', rings: null, settle: 2.6,
     draw: drawCalled,
     buzz: (t) => { const k = (t % CALLED_PERIOD) - 0.72; return k >= 0 && k < 0.7 ? 1 - k / 0.7 : 0; },
@@ -902,8 +903,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131225'),
-    loader.loadAsync('models/back-rough.png?v=202610131225'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131254'),
+    loader.loadAsync('models/back-rough.png?v=202610131254'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -976,7 +977,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131225');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131254');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
