@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131156', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131225', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -817,7 +817,7 @@ const SCENES = {
     draw: drawHouse,
   },
   reply: {
-    desk: [0.47, -0.02, 0.1, -0.18, 0.0, 0.72], mob: [0, 0.42, 0.06, -0.12, 0, 0.42],
+    desk: [-0.47, -0.02, 0.1, 0.18, 0.0, 0.72], mob: [0, 0.42, 0.06, -0.12, 0, 0.42],
     glow: '#6f9bff', rings: 'speaker', settle: 2.5,
     draw: drawReply,
   },
@@ -902,8 +902,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131156'),
-    loader.loadAsync('models/back-rough.png?v=202610131156'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131225'),
+    loader.loadAsync('models/back-rough.png?v=202610131225'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -976,7 +976,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131156');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131225');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),

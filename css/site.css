@@ -343,6 +343,12 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 @media (min-aspect-ratio: 1/1) and (min-width: 37.5rem) {
   .chapter { padding-left: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter))); }
   .chapter-text { width: 46%; max-width: var(--measure); }
+  /* One chapter swaps sides, so the phone crosses the page on the way. */
+  .chapter-mirror {
+    justify-content: flex-end;
+    padding-left: var(--gutter);
+    padding-right: max(var(--gutter), calc((100vw - 76rem) / 2 + var(--gutter)));
+  }
 }
 
 @media not all and (min-aspect-ratio: 1/1) and (min-width: 37.5rem) {
@@ -501,5 +507,5 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 /* No 3D (an old device, or WebGL turned off): the chapters read as a plain
    article instead of leaving room for the phone. */
 .no-webgl .stage { display: none; }
-.no-webgl .chapter { min-height: 0; justify-content: center; padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.no-webgl .chapter { min-height: 0; justify-content: center; padding: 2.5rem var(--gutter); }
 .no-webgl #top { padding-top: 7rem; }
