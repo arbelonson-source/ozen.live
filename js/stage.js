@@ -31,7 +31,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 // 3D library is still on its way. (A <link rel=preload> for it made Safari
 // download it twice.)
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610130905').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610130932').then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -753,13 +753,25 @@ function lensTexture() {
   return tex;
 }
 
+// The phone's and laptop's screens are canvases redrawn as they play. Their
+// textures are stored as plain RGBA, which Chrome copies straight on the
+// graphics chip; in sRGB format every update went through the CPU, about
+// five times slower. The shader converts the colours instead, the way
+// three.js handles video.
+function canvasScreenMaterial(map) {
+  map.colorSpace = THREE.NoColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map, toneMapped: false });
+  material.defines = { DECODE_VIDEO_TEXTURE: '' };
+  return material;
+}
+
 // models/phone.glb comes from the Blender script in the site's model/
 // folder; its parts are found here by material name.
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130905'),
-    loader.loadAsync('models/back-rough.png?v=202610130905'),
+    loader.loadAsync('models/back-colour.jpg?v=202610130932'),
+    loader.loadAsync('models/back-rough.png?v=202610130932'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -778,7 +790,7 @@ async function loadPhone(screenTexture) {
     Frame: new Mat({ color: 0xa7adb6, metalness: 1, roughness: 0.22 }),
     FrontGlass: new Mat({ color: 0x030405, roughness: 0.05, ...rich({ clearcoat: 1, clearcoatRoughness: 0.03 }) }),
     BackGlass: new Mat({ map: backColour, roughnessMap: backRough, roughness: 1, ...rich({ clearcoat: 0.12, clearcoatRoughness: 0.5 }) }),
-    Screen: new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false }),
+    Screen: canvasScreenMaterial(screenTexture),
     Cover: new Mat({
       color: 0x000000, roughness: 0.04, transparent: true, depthWrite: false,
       blending: THREE.AdditiveBlending, envMapIntensity: 0.22, ...rich({ clearcoat: 0.6, clearcoatRoughness: 0.03 }),
@@ -832,7 +844,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130905');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130932');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -840,7 +852,7 @@ async function loadLaptop(texture) {
     Key: new Mat({ color: 0x1c1f25, roughness: 0.55 }),
     Trackpad: new Mat({ color: 0xb3bac4, metalness: 0.6, roughness: 0.22 }),
     Bezel: new Mat({ color: 0x050607, roughness: 0.06 }),
-    LaptopScreen: new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
+    LaptopScreen: canvasScreenMaterial(texture),
     Hinge: new Mat({ color: 0x3a3f48, metalness: 1, roughness: 0.4 }),
     Port: new THREE.MeshBasicMaterial({ color: 0x040404 }),
   };
@@ -927,7 +939,6 @@ async function start() {
   // Start downloading the phone at once; the fonts its screen needs load
   // at the same time.
   const screenTexture = new THREE.CanvasTexture(screenCanvas);
-  screenTexture.colorSpace = THREE.SRGBColorSpace;
   screenTexture.flipY = false;
   if (TOUCH) {
     screenTexture.generateMipmaps = false;
@@ -977,7 +988,6 @@ async function start() {
   scene.add(rig);
 
   const laptopTexture = new THREE.CanvasTexture(laptopCanvas);
-  laptopTexture.colorSpace = THREE.SRGBColorSpace;
   laptopTexture.flipY = false;
   laptopTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
   drawLaptop(false);
