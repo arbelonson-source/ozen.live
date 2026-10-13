@@ -435,32 +435,34 @@ html:not(.no-webgl) body { background: var(--ink); }
   background: var(--ink-deep);
 }
 .panel-inner { max-width: 70rem; margin: 0 auto; }
-.panel h2 { font-size: clamp(2rem, 4vw, 3.2rem); margin-bottom: 1.2rem; }
 .panel p { max-width: var(--measure); color: #dfe5ee; }
 
-.follow {
+/* The story's last word: one statement across the width, then the two
+   facts behind it side by side, on the same grid as the footer below. */
+.panel-title {
+  font-size: clamp(2.3rem, 5.6vw, 4.8rem);
+  max-width: 13em;
+  margin-bottom: clamp(2rem, 4vw, 3.25rem);
+}
+.panel-cols {
   display: grid;
-  gap: 2.5rem;
+  gap: 2.75rem clamp(2.5rem, 6vw, 5rem);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   align-items: start;
 }
+.panel-sub { font-size: clamp(1.35rem, 2vw, 1.6rem); line-height: 1.2; margin-bottom: 0.7rem; letter-spacing: 0; }
 
-.social-link {
+.panel-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.8rem;
-  margin-top: 0.4rem;
-  padding: 0.8rem 1.2rem 0.8rem 0.9rem;
-  border-radius: 1rem;
-  background: var(--ink-raised);
-  border: 1px solid var(--line);
+  gap: 0.65rem;
+  min-height: 2.75rem;
   color: var(--paper);
-  text-decoration: none;
   font-weight: 700;
+  text-decoration-color: rgba(246, 243, 236, 0.45);
 }
-.social-link:hover { border-color: var(--paper); }
-.social-link svg { width: 1.8rem; height: 1.8rem; flex: none; }
-.social-link span small { display: block; font-weight: 400; color: var(--muted); font-size: 0.95rem; }
+.panel-link:hover { text-decoration-color: var(--paper); }
+.panel-link svg { width: 1.5rem; height: 1.5rem; flex: none; }
 
 /* Footer */
 
