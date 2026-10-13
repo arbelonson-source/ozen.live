@@ -3,8 +3,8 @@
 // from what Ozen really shows. Purely decorative: every chapter's text is
 // in the page, and the canvas is hidden from screen readers.
 
-import * as THREE from '../vendor/three.module.min.js';
-import { GLTFLoader } from '../vendor/GLTFLoader.js';
+// Loaded in start(), after the page's text has painted.
+let THREE, GLTFLoader;
 
 const stage = document.querySelector('.stage');
 const canvas = stage ? stage.querySelector('canvas') : null;
@@ -750,9 +750,9 @@ function lensTexture() {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130844'),
-    loader.loadAsync('models/back-rough.png?v=202610130844'),
-    new GLTFLoader().loadAsync('models/phone.glb?v=202610130844'),
+    loader.loadAsync('models/back-colour.jpg?v=202610130856'),
+    loader.loadAsync('models/back-rough.png?v=202610130856'),
+    new GLTFLoader().loadAsync('models/phone.glb?v=202610130856'),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
@@ -824,7 +824,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130844');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130856');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -897,6 +897,11 @@ async function fontsReady() {
 
 async function start() {
   if (!stage || !canvas || !story || chapters.length === 0) return;
+
+  // The 3D library is large; reading it before the first paint would hold
+  // up the text on slow phones, so wait for one frame first.
+  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  [THREE, { GLTFLoader }] = await Promise.all([import('../vendor/three.module.min.js'), import('../vendor/GLTFLoader.js')]);
 
   let renderer;
   try {
