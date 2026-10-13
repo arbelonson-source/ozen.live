@@ -140,6 +140,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* Keeps links and keyboard focus clear of the fixed header. */
+  scroll-padding-top: 5rem;
   background: var(--ink);
 }
 
@@ -351,13 +353,31 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   }
 }
 
+/* Phones and tall tablets: the phone keeps the top half of the screen to
+   itself and the text scrolls up underneath it, so a chapter's animation is
+   never covered by its text. js/stage.js only draws that top part. */
 @media not all and (min-aspect-ratio: 1/1) and (min-width: 37.5rem) {
-  .chapter { align-items: flex-end; justify-content: center; padding-top: 56vh; padding-top: 56svh; padding-bottom: 1.5rem; }
+  html { scroll-padding-top: 56vh; scroll-padding-top: 56svh; }
+  .stage {
+    z-index: 2;
+    pointer-events: auto;
+    clip-path: inset(0 0 46% 0);
+    /* Text starts below the shown part, and the stage leaves with the last
+       chapter instead of covering what follows the story. */
+    margin-bottom: -46vh;
+    margin-bottom: -46svh;
+    background:
+      radial-gradient(120% 60% at 80% 0%, #1b3560 0%, rgba(27, 53, 96, 0) 60%),
+      linear-gradient(to bottom, var(--ink) 52%, rgba(15, 30, 51, 0) 54%);
+  }
+  .chapter {
+    min-height: 48vh;
+    min-height: 48svh;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.25rem var(--gutter) 1.5rem;
+  }
   .chapter-text {
-    background: rgba(10, 21, 38, 0.94);
-    border: 1px solid var(--line);
-    border-radius: 1.25rem;
-    padding: 1.1rem 1.15rem 0.35rem;
     font-size: 1.0625rem;
     line-height: 1.5;
   }
@@ -509,3 +529,4 @@ p { margin: 0 0 1em; text-wrap: pretty; }
 .no-webgl .stage { display: none; }
 .no-webgl .chapter { min-height: 0; justify-content: center; padding: 2.5rem var(--gutter); }
 .no-webgl #top { padding-top: 7rem; }
+html.no-webgl { scroll-padding-top: 5rem; }

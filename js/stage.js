@@ -35,7 +35,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131345', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131403', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -917,8 +917,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131345'),
-    loader.loadAsync('models/back-rough.png?v=202610131345'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131403'),
+    loader.loadAsync('models/back-rough.png?v=202610131403'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -994,7 +994,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131345');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131403');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1127,7 +1127,18 @@ async function start() {
     ? [{ dpr: 1.5, fps: 15, cap: 60 }, { dpr: 1.25, fps: 12, cap: 60 }, { dpr: 1, fps: 12, cap: 30 }, { dpr: 0.8, fps: 10, cap: 30 }]
     : [{ dpr: 2, fps: 30, cap: 60 }, { dpr: 1.5, fps: 24, cap: 60 }, { dpr: 1.2, fps: 20, cap: 60 }, { dpr: 1, fps: 15, cap: 30 }];
   let step = 0;
-  const applyStep = () => renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, STEPS[step].dpr));
+  // Stacked, only the top 54% of the stage shows (see the stylesheet), so
+  // only that part is drawn. three.js fixes the scissor in device pixels when
+  // it's set, so this runs again whenever the size or pixel ratio changes.
+  function applyScissor() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setScissor(0, h * 0.46, w, h * 0.54);
+    renderer.setScissorTest(!WIDE.matches);
+  }
+  const applyStep = () => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, STEPS[step].dpr));
+    applyScissor();
+  };
   applyStep();
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -1249,6 +1260,7 @@ async function start() {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    applyScissor();
   }
 
   // Where each chapter sits on the page, measured only when the layout
@@ -1264,8 +1276,10 @@ async function start() {
   measure();
   new ResizeObserver(measure).observe(story);
 
+  // The line a chapter's top crosses to take over the phone: mid-screen
+  // beside the text, or the middle of the text area under a stacked phone.
   function activeChapter(scrollY) {
-    const mid = scrollY + window.innerHeight * 0.5;
+    const mid = scrollY + window.innerHeight * (WIDE.matches ? 0.5 : 0.76);
     let best = marks[0], progress = 0;
     for (const m of marks) {
       if (m.top <= mid) {
