@@ -32,7 +32,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 // download it twice.)
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch('models/phone.glb?v=202610131025', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch('models/phone.glb?v=202610131054', { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -823,8 +823,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610131025'),
-    loader.loadAsync('models/back-rough.png?v=202610131025'),
+    loader.loadAsync('models/back-colour.jpg?v=202610131054'),
+    loader.loadAsync('models/back-rough.png?v=202610131054'),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -897,7 +897,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131025');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610131054');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -997,9 +997,14 @@ async function start() {
     document.documentElement.classList.add('no-webgl');
     return;
   }
+  // A phone can take the graphics context away (low memory, switching
+  // apps). The page keeps its layout, the canvas fades out, and the scene
+  // comes back if the context does (see 'webglcontextrestored' below).
+  let contextLost = false;
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
-    document.documentElement.classList.add('no-webgl');
+    contextLost = true;
+    stage.classList.remove('ready');
   });
 
   // Start downloading the phone at once; the fonts its screen needs load
@@ -1035,9 +1040,13 @@ async function start() {
   // to taps and scrolling between them.
   await nextFrame();
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(studioEnvironment(), 0.02).texture;
-  pmrem.dispose();
+  const makeEnvironment = () => {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const target = pmrem.fromScene(studioEnvironment(), 0.02);
+    pmrem.dispose();
+    return target.texture;
+  };
+  scene.environment = makeEnvironment();
 
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
   camera.position.set(0, 0, 10);
@@ -1219,7 +1228,7 @@ async function start() {
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw);
     last = now;
-    if (!visible || document.hidden) return;
+    if (!visible || document.hidden || contextLost) return;
     resize();
 
     // Paused and not scrolling: the picture is already settled, so stop drawing.
@@ -1350,6 +1359,15 @@ async function start() {
   if (renderer.extensions.has('KHR_parallel_shader_compile')) {
     try { await renderer.compileAsync(scene, camera); } catch (err) { /* compiled on first draw instead */ }
   }
+
+  // three.js rebuilds its own state when the context returns; the studio
+  // lighting was rendered on the graphics chip, so it's made again here.
+  canvas.addEventListener('webglcontextrestored', () => {
+    scene.environment = makeEnvironment();
+    contextLost = false;
+    redraw();
+    stage.classList.add('ready');
+  });
 
   resize();
   requestAnimationFrame((now) => {
