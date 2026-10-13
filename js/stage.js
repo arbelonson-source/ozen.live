@@ -750,9 +750,9 @@ function lensTexture() {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync('models/back-colour.jpg?v=202610130856'),
-    loader.loadAsync('models/back-rough.png?v=202610130856'),
-    new GLTFLoader().loadAsync('models/phone.glb?v=202610130856'),
+    loader.loadAsync('models/back-colour.jpg?v=202610130901'),
+    loader.loadAsync('models/back-rough.png?v=202610130901'),
+    new GLTFLoader().loadAsync('models/phone.glb?v=202610130901'),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
   for (const t of [backColour, backRough]) {
@@ -824,7 +824,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130856');
+  const gltf = await new GLTFLoader().loadAsync('models/laptop.glb?v=202610130901');
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -900,7 +900,8 @@ async function start() {
 
   // The 3D library is large; reading it before the first paint would hold
   // up the text on slow phones, so wait for one frame first.
-  await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  await nextFrame();
   [THREE, { GLTFLoader }] = await Promise.all([import('../vendor/three.module.min.js'), import('../vendor/GLTFLoader.js')]);
 
   let renderer;
@@ -945,6 +946,9 @@ async function start() {
   renderer.toneMappingExposure = 1.05;
   renderer.setClearColor(0x000000, 0);
 
+  // Each setup step runs as its own task, so the page can still respond
+  // to taps and scrolling between them.
+  await nextFrame();
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(studioEnvironment(), 0.02).texture;
@@ -961,6 +965,7 @@ async function start() {
   scene.add(rim);
 
   const { rig, body } = await phoneLoad;
+  await nextFrame();
   scene.add(rig);
 
   const laptopTexture = new THREE.CanvasTexture(laptopCanvas);
@@ -1253,6 +1258,12 @@ async function start() {
     }
 
     renderer.render(scene, camera);
+  }
+
+  // Where the browser can prepare shaders in the background, do that
+  // before the first frame instead of freezing the page while drawing it.
+  if (renderer.extensions.has('KHR_parallel_shader_compile')) {
+    try { await renderer.compileAsync(scene, camera); } catch (err) { /* compiled on first draw instead */ }
   }
 
   resize();
