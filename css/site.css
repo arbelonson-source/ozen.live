@@ -206,14 +206,9 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   border-radius: 0.6rem;
 }
 .site-nav a:hover { background: rgba(255, 255, 255, 0.08); }
-.site-nav .lang-switch {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0.45rem 0.75rem;
-  border: 2px solid rgba(246, 243, 236, 0.35);
-}
-.site-nav .lang-switch:hover { border-color: var(--paper); background: transparent; }
+/* Links in the header are plain text, the pause control is outlined, and
+   the one main action is yellow. */
+.site-nav .lang-switch { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .lang-switch:lang(he) { font-family: "Rubik", system-ui, sans-serif; }
 .site-nav .nav-get { background: var(--yellow); color: var(--yellow-ink); }
 .site-nav .nav-get:hover { background: #fff07a; }
@@ -348,10 +343,15 @@ p { margin: 0 0 1em; text-wrap: pretty; }
        chapter instead of covering what follows the story. */
     margin-bottom: -46vh;
     margin-bottom: -46svh;
+    /* The lower edge feathers out, so text scrolling up fades away under
+       the phone instead of meeting a line. */
     background:
       radial-gradient(120% 60% at 80% 0%, #1b3560 0%, rgba(27, 53, 96, 0) 60%),
-      linear-gradient(to bottom, var(--ink) 52%, rgba(15, 30, 51, 0) 54%);
+      linear-gradient(to bottom, var(--ink) 47%, rgba(15, 30, 51, 0) 54%);
   }
+  /* The text sits on the same plain ink as the stage's edge, so the two
+     halves meet without a step in colour. */
+  html:not(.no-webgl) body { background: var(--ink); }
   .chapter {
     min-height: 48vh;
     min-height: 48svh;

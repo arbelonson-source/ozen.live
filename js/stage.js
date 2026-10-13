@@ -38,7 +38,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch(asset('models/phone.glb?v=202610131514'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202610131523'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -960,8 +960,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync(asset('models/back-colour.jpg?v=202610131514')),
-    loader.loadAsync(asset('models/back-rough.png?v=202610131514')),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202610131523')),
+    loader.loadAsync(asset('models/back-rough.png?v=202610131523')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -1037,7 +1037,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131514'));
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610131523'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
@@ -1201,6 +1201,29 @@ async function start() {
 
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
   camera.position.set(0, 0, 10);
+
+  // Stacked, the drawing stops at 54% of the screen. This band fades what's
+  // already drawn (glow, rings) out between 47% and 54%, matching the
+  // stage's feathered edge in the stylesheet, so nothing ends in a cut line.
+  // It's drawn last and only covers the band itself.
+  const fadeBand = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 0.14).translate(0, -0.01, 0),
+    new THREE.ShaderMaterial({
+      vertexShader: 'varying float vY; void main() { vY = position.y; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: 'varying float vY; void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, smoothstep(0.06, -0.08, vY)); }',
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.ZeroFactor,
+      blendDst: THREE.OneMinusSrcAlphaFactor,
+      blendSrcAlpha: THREE.ZeroFactor,
+      blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
+    }),
+  );
+  fadeBand.frustumCulled = false;
+  fadeBand.renderOrder = 1000;
+  scene.add(fadeBand);
 
   const key = new THREE.DirectionalLight(0xffffff, 1.6);
   key.position.set(4, 6, 8);
@@ -1517,6 +1540,7 @@ async function start() {
       r.mesh.material.opacity = r.strength * (r.inward ? Math.sin(age * Math.PI) : 1 - age);
     }
 
+    fadeBand.visible = narrow;
     renderer.render(scene, camera);
   }
 
