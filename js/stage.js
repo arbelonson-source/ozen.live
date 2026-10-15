@@ -38,7 +38,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch(asset('models/phone.glb?v=202610152218'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202610160219'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -438,7 +438,7 @@ const S = HE ? {
   letters: 'נתראה מחר ב-10', clear: 'ניקוי', flip: 'להפוך', back: 'חזרה', speak: 'להשמיע', close: 'סגירה',
   noInternet: 'לא צריך אינטרנט',
   pointCamera: 'מכוונים את המצלמה אל הקוד שבמחשב', connected: 'מחובר', connectedNote: 'הכתוביות מגיעות עכשיו מהמחשב בבית.',
-  welcomeTitle: 'אוזן', welcome: ['כתוביות חיות לשיחה.', 'מה שאומרים לידך מופיע על המסך, באותיות גדולות, תוך כדי הדיבור.', 'הכל קורה בתוך הטלפון. שום דבר לא נשלח לאינטרנט.'],
+  welcomeTitle: 'אוזן', welcome: ['כתוביות חיות לשיחה.', 'מה שאומרים לידך מופיע על המסך, באותיות גדולות, תוך כדי הדיבור.', 'כברירת מחדל, הכל קורה בתוך הטלפון.'],
   skip: 'דילוג', next: 'הבא',
   pause: 'השהיית האנימציה', resume: 'הפעלת האנימציה',
 } : {
@@ -453,7 +453,7 @@ const S = HE ? {
   letters: 'See you tomorrow at 10', clear: 'Clear', flip: 'Flip', back: 'Back', speak: 'Speak', close: 'Close',
   noInternet: 'No internet needed',
   pointCamera: 'Point the camera at the code on the computer', connected: 'Connected', connectedNote: 'Captions now use your home computer.',
-  welcomeTitle: 'Ozen', welcome: ['Live captions for conversation.', 'What’s said near you appears on the screen, in large letters, as it’s spoken.', 'It all happens on the phone. Nothing is sent to the internet.'],
+  welcomeTitle: 'Ozen', welcome: ['Live captions for conversation.', 'What’s said near you appears on the screen, in large letters, as it’s spoken.', 'By default it all happens on the phone.'],
   skip: 'Skip', next: 'Next',
   pause: 'Pause animation', resume: 'Play animation',
 };
@@ -987,8 +987,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync(asset('models/back-colour.jpg?v=202610152218')),
-    loader.loadAsync(asset('models/back-rough.png?v=202610152218')),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202610160219')),
+    loader.loadAsync(asset('models/back-rough.png?v=202610160219')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -1064,7 +1064,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610152218'));
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202610160219'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
