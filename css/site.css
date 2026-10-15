@@ -197,6 +197,7 @@ p { margin: 0 0 1em; text-wrap: pretty; }
   font-family: var(--display);
   font-weight: 700;
   font-size: 1.35rem;
+  min-height: 2.75rem;
 }
 .brand img { width: 2.4rem; height: 2.4rem; border-radius: 22%; }
 
@@ -513,8 +514,8 @@ html:not(.no-webgl) body { background: var(--ink); }
   gap: 1.5rem 3rem;
   justify-content: space-between;
 }
-.site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; }
-.site-footer a { color: var(--paper); }
+.site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0 1.4rem; }
+.site-footer a { color: var(--paper); display: inline-flex; align-items: center; min-height: 2.75rem; }
 .footer-lang-note { margin: 0.75rem 0 0; font-size: 0.95rem; }
 
 /* Legal and information pages */
