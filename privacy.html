@@ -77,7 +77,7 @@
 <p>The sound is turned into words on the phone itself. Nothing you say leaves the phone, and the app has no analytics or usage-reporting code.</p>
 <p>The app goes online only for things that aren't your words:</p>
 <ul>
-  <li>To download a speech model, once. On iPhone the files come from the model maker's website or from Ozen's page on GitHub. On Android the Hebrew models come from Ozen's page on GitHub and the other languages from whisper.cpp's page on Hugging Face. Like any download, that site can see the phone's internet address.</li>
+  <li>To download a speech model, once. On iPhone the Hebrew models come from Ozen's page on GitHub and the other models from WhisperKit's model collection on Hugging Face. On Android the Hebrew models come from Ozen's page on GitHub and the other languages from whisper.cpp's page on Hugging Face. Like any download, that site can see the phone's internet address.</li>
   <li>To fetch the model's word list the first time the model loads.</li>
   <li>If you use an online captioning service, to check that your key still works. No sound is sent with that check.</li>
 </ul>
@@ -96,7 +96,7 @@
   <tbody>
     <tr><td data-label="What">Saved conversations (you can turn saving off)</td><td data-label="How long">Until you delete them, or automatic deletion does</td></tr>
     <tr><td data-label="What">Settings, names, alert words, and saved speakers' voice prints</td><td data-label="How long">Until you change or delete them</td></tr>
-    <tr><td data-label="What">Keys for online services and the home computer's pairing code, in the iPhone's Keychain or, on Android, the phone's protected Keystore storage</td><td data-label="How long">Until you delete them</td></tr>
+    <tr><td data-label="What">Keys for online services and the home computer's pairing code, in the iPhone's Keychain or, on Android, encrypted in the app's private storage with a key the phone's Keystore protects</td><td data-label="How long">Until you delete them</td></tr>
     <tr><td data-label="What">Short sound clips, only when you mark a problem</td><td data-label="How long">Up to 5, the newest kept</td></tr>
     <tr><td data-label="What">A short journal of what the captions did</td><td data-label="How long">About 500 lines; older lines drop off</td></tr>
   </tbody>
