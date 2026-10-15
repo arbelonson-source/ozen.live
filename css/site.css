@@ -414,6 +414,7 @@ html:not(.no-webgl) body { background: var(--ink); }
     line-height: 1.5;
   }
   .chapter p { margin-bottom: 0.75em; }
+  .chapter-link a { display: inline-flex; align-items: center; min-height: 2.75rem; }
   .chapter h1 { font-size: clamp(1.9rem, 8.2vw, 2.6rem); margin-bottom: 0.8rem; }
   .chapter h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); margin-bottom: 0.7rem; }
   .chapter .lede { font-size: 1.125rem; }

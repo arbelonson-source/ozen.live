@@ -27,7 +27,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="fonts/Rubik-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/AtkinsonHyperlegible-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/site.css?v=202610151518">
+<link rel="stylesheet" href="css/site.css?v=202610152019">
 </head>
 <body class="doc-page">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -77,7 +77,7 @@
 <p>The sound is turned into words on the phone itself. Nothing you say leaves the phone, and the app has no analytics or usage-reporting code.</p>
 <p>The app goes online only for things that aren't your words:</p>
 <ul>
-  <li>To download a speech model, once. The files come from the model maker's website or from Ozen's page on GitHub. Like any download, that site can see the phone's internet address.</li>
+  <li>To download a speech model, once. On iPhone the files come from the model maker's website or from Ozen's page on GitHub. On Android the Hebrew models come from Ozen's page on GitHub and the other languages from whisper.cpp's page on Hugging Face. Like any download, that site can see the phone's internet address.</li>
   <li>To fetch the model's word list the first time the model loads.</li>
   <li>If you use an online captioning service, to check that your key still works. No sound is sent with that check.</li>
 </ul>
@@ -96,13 +96,13 @@
   <tbody>
     <tr><td data-label="What">Saved conversations (you can turn saving off)</td><td data-label="How long">Until you delete them, or automatic deletion does</td></tr>
     <tr><td data-label="What">Settings, names, alert words, and saved speakers' voice prints</td><td data-label="How long">Until you change or delete them</td></tr>
-    <tr><td data-label="What">Keys for online services and the home computer's pairing code, in the phone's Keychain</td><td data-label="How long">Until you delete them</td></tr>
+    <tr><td data-label="What">Keys for online services and the home computer's pairing code, in the iPhone's Keychain or, on Android, the phone's protected Keystore storage</td><td data-label="How long">Until you delete them</td></tr>
     <tr><td data-label="What">Short sound clips, only when you mark a problem</td><td data-label="How long">Up to 5, the newest kept</td></tr>
     <tr><td data-label="What">A short journal of what the captions did</td><td data-label="How long">About 500 lines; older lines drop off</td></tr>
   </tbody>
 </table>
-<p>A voice print is a short list of numbers that describes a voice. The recording itself isn't kept. Saved conversations and settings are included in the phone's iCloud or computer backup when backup is on.</p>
-<p>Everything can be deleted inside the app. The <a href="https://github.com/arbelonson-source/ozen/blob/master/docs/privacy.md">app's privacy guide</a> shows where each delete button is. Deleting the app removes its files, but the phone can keep Keychain items, so delete your keys and pairing code first.</p>
+<p>A voice print is a short list of numbers that describes a voice. The recording itself isn't kept. On iPhone, saved conversations and settings are included in the phone's iCloud or computer backup when backup is on. On Android, app backup is switched off.</p>
+<p>Everything can be deleted inside the app. The <a href="https://github.com/arbelonson-source/ozen/blob/master/docs/privacy.md">app's privacy guide</a> shows where each delete button is. Deleting the app removes its files, but an iPhone can keep Keychain items, so delete your keys and pairing code first.</p>
 <h3>Diagnostics reports</h3>
 <p>The app can build a report about its own state, to help fix problems. Nothing sends it by itself. It goes out only if you share it, copy it or send it to your home computer, and you can read it first. It leaves out the sound, your conversations, speaker names, voice prints, your word lists and your keys.</p>
 <h3>App stores</h3>
