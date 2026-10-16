@@ -422,8 +422,9 @@ html:not(.no-webgl) body { background: var(--ink); }
   .chapter .btn { min-height: 3rem; }
   /* Once the next chapter has taken over the stage, the opening buttons
      are only a ghost in the feathered band under the phone: hide them. */
-  #top .actions { transition: opacity 250ms ease, visibility 0s 250ms; }
-  .story:has(.stage[data-room]:not([data-room="captions"])) #top .actions {
+  #top .actions { transition: opacity 250ms ease, visibility 0s; }
+  .story:has(.stage[data-room]:not([data-room="captions"])) #top .actions:not(:focus-within) {
+    transition: opacity 250ms ease, visibility 0s 250ms;
     opacity: 0;
     visibility: hidden;
   }
