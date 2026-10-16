@@ -420,6 +420,14 @@ html:not(.no-webgl) body { background: var(--ink); }
   .chapter .lede { font-size: 1.125rem; }
   .chapter .actions { margin-top: 1rem; margin-bottom: 0.8rem; }
   .chapter .btn { min-height: 3rem; }
+  /* Once the next chapter has taken over the stage, the opening buttons
+     are only a ghost in the feathered band under the phone: hide them. */
+  #top .actions { transition: opacity 250ms ease, visibility 0s; }
+  .story:has(.stage[data-room]:not([data-room="captions"])) #top .actions:not(:focus-within) {
+    transition: opacity 250ms ease, visibility 0s 250ms;
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 /* Pause control for the moving demo (WCAG 2.2.2), always in the header */
