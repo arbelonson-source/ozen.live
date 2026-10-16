@@ -421,13 +421,16 @@ html:not(.no-webgl) body { background: var(--ink); }
   .chapter .actions { margin-top: 1rem; margin-bottom: 0.8rem; }
   .chapter .btn { min-height: 3rem; }
   /* Once the next chapter has taken over the stage, the opening buttons and the privacy link
-     are only a ghost in the feathered band under the phone: hide them. */
-  #top .actions, #private .chapter-link { transition: opacity 250ms ease, visibility 0s; }
+     are only a ghost in the feathered band under the phone: hide them from sight and touch,
+     but keep them in the keyboard order, where focusing one shows it again. */
+  #top .actions, #private .chapter-link { transition: opacity 250ms ease; }
   .story:has(.stage[data-room]:not([data-room="captions"])) #top .actions:not(:focus-within),
   .story:has(.stage[data-room]:not([data-room="private"])) #private .chapter-link:not(:focus-within) {
-    transition: opacity 250ms ease, visibility 0s 250ms;
     opacity: 0;
-    visibility: hidden;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #top .actions, #private .chapter-link { transition: none; }
   }
 }
 
