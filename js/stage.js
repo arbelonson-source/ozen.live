@@ -38,7 +38,7 @@ const WIDE = window.matchMedia('(min-aspect-ratio: 1/1) and (min-width: 37.5rem)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const phoneAbort = new AbortController();
 const phoneBytes = 'WebGL2RenderingContext' in window
-  ? fetch(asset('models/phone.glb?v=202611052238'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
+  ? fetch(asset('models/phone.glb?v=202611092103'), { signal: phoneAbort.signal }).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`phone.glb ${r.status}`))))
   : Promise.reject(new Error('no WebGL 2'));
 phoneBytes.catch(() => {});
 
@@ -427,23 +427,23 @@ function wrapCentered(text, y, size, colour, weight = 400, family = BODY, maxW =
 // Everything the phone says, in the page's language. The Hebrew is the
 // app's own wording where the app has it (App/Ozen/Views, tr(...)).
 const S = HE ? {
-  listening: 'מקשיב', tapToPause: 'הקישו כדי להשהות',
+  listening: 'מאזינה', tapToPause: 'הקישו כדי להשהות',
   heroHistory: 'היי סבתא, הבאנו לך ארוחת בוקר.',
   hero: ['בוקר טוב! ישנת טוב?', 'בית המרקחת נסגר מוקדם ביום שישי.', 'בואי נלך מחר ב-10.', 'רוצה שאקפיץ אותך לשם?'],
   speakers: [['נועה', 'אתם באים בשבת?'], ['אבא', 'נגיע עד 12.'], ['נועה', 'מעולה! תביאו את העוגה.']],
   nameLine: 'סבתא, רוצה תה?', name: 'סבתא', said: 'נאמר: סבתא',
   houseLines: ['רוצה תה?', 'כן, תודה, עם לימון.'], doorbell: 'פעמון דלת', heardNow: 'נשמע עכשיו',
-  say: 'להגיד', reply: 'אפשר לדבר קצת יותר לאט, בבקשה?', play: 'להשמיע', stop: 'עצירה',
+  say: 'להגיד', reply: 'אפשר לדבר קצת יותר לאט, בבקשה?', play: 'השמעה', stop: 'עצירה',
   quickPhrases: 'משפטים מוכנים', phrases: ['רגע, לא הבנתי', 'אפשר לחזור על זה?', 'לאט יותר בבקשה', 'כן', 'תודה'],
-  letters: 'נתראה מחר ב-10', clear: 'ניקוי', flip: 'להפוך', back: 'חזרה', speak: 'להשמיע', close: 'סגירה',
+  letters: 'נתראה מחר ב-10', clear: 'ניקוי', flip: 'היפוך', back: 'חזרה', speak: 'השמעה', close: 'סגירה',
   noInternet: 'בלי אינטרנט',
   pointCamera: 'מכוונים את המצלמה אל הקוד שעל מסך המחשב', connected: 'מחובר', connectedNote: 'הכתוביות מגיעות מהמחשב בבית.',
-  welcomeTitle: 'אוזן', welcome: ['כתוביות חיות לשיחה.', 'מה שאומרים לידך מופיע על המסך, באותיות גדולות, תוך כדי הדיבור.', 'כברירת מחדל, הכל קורה בתוך הטלפון.'],
+  welcomeTitle: 'אוזן', welcome: ['כתוביות בזמן אמת לכל שיחה.', 'מה שאומרים לידכם מופיע על המסך באותיות גדולות, תוך כדי הדיבור.', 'כברירת מחדל, הכול קורה בתוך הטלפון.'],
   skip: 'דילוג', next: 'הבא',
   pause: 'השהיית האנימציה', resume: 'הפעלת האנימציה',
 } : {
   listening: 'Listening', tapToPause: 'Tap to pause',
-  heroHistory: 'Hi Grandma, we brought you lunch.',
+  heroHistory: 'Hi Grandma, we brought you breakfast.',
   hero: ['Good morning! Did you sleep well?', 'The pharmacy closes early on Friday.', "Let's go tomorrow at 10.", 'Do you want me to drive you there?'],
   speakers: [['Noa', 'Are you coming on Saturday?'], ['Dad', "We'll be there by 12."], ['Noa', 'Great! Bring the cake.']],
   nameLine: 'Grandma, do you want some tea?', name: 'Grandma', said: 'Said: Grandma',
@@ -987,8 +987,8 @@ function canvasScreenMaterial(map) {
 async function loadPhone(screenTexture) {
   const loader = new THREE.TextureLoader();
   const [backColour, backRough, gltf] = await Promise.all([
-    loader.loadAsync(asset('models/back-colour.jpg?v=202611052238')),
-    loader.loadAsync(asset('models/back-rough.png?v=202611052238')),
+    loader.loadAsync(asset('models/back-colour.jpg?v=202611092103')),
+    loader.loadAsync(asset('models/back-rough.png?v=202611092103')),
     phoneBytes.then((bytes) => new GLTFLoader().parseAsync(bytes, '')),
   ]);
   backColour.colorSpace = THREE.SRGBColorSpace;
@@ -1064,7 +1064,7 @@ function studioEnvironment() {
 }
 
 async function loadLaptop(texture) {
-  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202611052238'));
+  const gltf = await new GLTFLoader().loadAsync(asset('models/laptop.glb?v=202611092103'));
   const Mat = TOUCH ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const mats = {
     Alu: new Mat({ color: 0xc3c9d2, metalness: 1, roughness: 0.3 }),
